@@ -49,6 +49,7 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
+            cursor: pointer;
         }
         
         .logo-large {
@@ -108,6 +109,16 @@
             background: rgba(16, 185, 129, 0.2);
             color: #10b981;
             border: 1px solid #10b981;
+        }
+
+        .btn-admin {
+            background: rgba(139, 92, 246, 0.2);
+            color: #a78bfa;
+            border: 1px solid #a78bfa;
+        }
+
+        .btn-admin:hover {
+            background: rgba(139, 92, 246, 0.4);
         }
 
         .card {
@@ -435,6 +446,7 @@
         let currentUser = null;
         let currentUserData = null;
         let selectedUser = null;
+        let isAdminMode = false;
 
         function showToast(message, type = 'success') {
             const toast = document.createElement('div');
@@ -457,13 +469,17 @@
                     firstName: firstName,
                     lastName: lastName,
                     telegramNickname: telegramNickname,
-                    telegramVerified: false,
+                    telegramVerified: email === 'sad.spotty@gmail.com',
                     emailVerified: false,
                     createdAt: new Date().toISOString()
                 };
                 await setDoc(userRef, userData);
                 
-                showToast('✅ Регистрация успешна! Письмо с подтверждением отправлено на почту', 'success');
+                if (email === 'sad.spotty@gmail.com') {
+                    showToast('✅ Регистрация успешна!', 'success');
+                } else {
+                    showToast('✅ Регистрация успешна! Письмо с подтверждением отправлено на почту', 'success');
+                }
                 return true;
             } catch (error) {
                 if (error.code === 'auth/email-already-in-use') {
@@ -482,7 +498,7 @@
                 
                 await user.reload();
                 
-                if (!user.emailVerified) {
+                if (!user.emailVerified && email !== 'sad.spotty@gmail.com') {
                     showToast('📧 Подтвердите почту! Письмо отправлено на ' + email, 'error');
                     return false;
                 }
@@ -548,6 +564,7 @@
             await signOut(auth);
             currentUser = null;
             currentUserData = null;
+            isAdminMode = false;
             showToast('👋 Вы вышли', 'success');
             renderAuthScreen();
         }
@@ -629,13 +646,17 @@
             const userRef = doc(db, 'users', userId);
             await updateDoc(userRef, { telegramVerified: true });
             showToast('✅ Telegram подтверждён', 'success');
-            loadAdminPanel();
+            if (isAdminMode) {
+                loadAdminPanel();
+            }
         }
 
         async function deleteQuestion(questionId) {
             await deleteDoc(doc(db, 'questions', questionId));
             showToast('🗑️ Вопрос удалён', 'success');
-            loadAdminPanel();
+            if (isAdminMode) {
+                loadAdminPanel();
+            }
         }
 
         async function getAllQuestionsAdmin() {
@@ -762,12 +783,13 @@
 
         function renderMainScreen() {
             const appDiv = document.getElementById('app');
+            const isAdmin = currentUser?.email === 'sad.spotty@gmail.com';
             
-            if (!currentUserData?.emailVerified) {
+            if (!currentUserData?.emailVerified && !isAdmin) {
                 appDiv.innerHTML = `
                     <div class="header">
                         <div class="header-content">
-                            <div class="logo">HATERS ANON ⚡</div>
+                            <div class="logo" id="logoBtn">HATERS ANON ⚡</div>
                             <button class="btn btn-secondary" id="logoutBtn">Выйти</button>
                         </div>
                     </div>
@@ -784,6 +806,12 @@
                 document.getElementById('logoutBtn').onclick = logoutUser;
                 document.getElementById('resendEmailBtn')?.addEventListener('click', resendVerificationEmail);
                 document.getElementById('deleteAccountBtn')?.addEventListener('click', deleteUnverifiedAccount);
+                document.getElementById('logoBtn')?.addEventListener('click', () => {
+                    if (isAdmin) {
+                        isAdminMode = false;
+                        renderMainScreen();
+                    }
+                });
                 return;
             }
             
@@ -791,7 +819,7 @@
                 appDiv.innerHTML = `
                     <div class="header">
                         <div class="header-content">
-                            <div class="logo">HATERS ANON ⚡</div>
+                            <div class="logo" id="logoBtn">HATERS ANON ⚡</div>
                             <button class="btn btn-secondary" id="logoutBtn">Выйти</button>
                         </div>
                     </div>
@@ -799,7 +827,7 @@
                         <div class="card" style="text-align: center;">
                             <h2>⏳ Ожидание подтверждения Telegram</h2>
                             <p>Ваш Telegram аккаунт (@${currentUserData?.telegramNickname}) ещё не подтверждён администратором.</p>
-                            ${currentUser?.email === 'sad.spotty@gmail.com' ? `
+                            ${isAdmin ? `
                                 <button class="btn btn-success self-verify-btn" id="selfVerifyBtn">✅ Подтвердить мой Telegram</button>
                             ` : ''}
                             <button class="btn btn-danger delete-account-btn" id="deleteAccountBtn" style="margin-top: 15px;">🗑️ Удалить аккаунт</button>
@@ -808,24 +836,33 @@
                 `;
                 document.getElementById('logoutBtn').onclick = logoutUser;
                 document.getElementById('deleteAccountBtn')?.addEventListener('click', deleteUnverifiedAccount);
-                if (currentUser?.email === 'sad.spotty@gmail.com') {
+                document.getElementById('logoBtn')?.addEventListener('click', () => {
+                    if (isAdmin) {
+                        isAdminMode = false;
+                        renderMainScreen();
+                    }
+                });
+                if (isAdmin) {
                     document.getElementById('selfVerifyBtn')?.addEventListener('click', selfVerifyTelegram);
                 }
                 return;
             }
             
-            if (currentUser?.email === 'sad.spotty@gmail.com') {
+            // Админ-панель
+            if (isAdmin && isAdminMode) {
                 loadAdminPanel();
                 return;
             }
             
+            // Обычный пользовательский интерфейс
             appDiv.innerHTML = `
                 <div class="header">
                     <div class="header-content">
-                        <div class="logo">HATERS ANON ⚡</div>
+                        <div class="logo" id="logoBtn">HATERS ANON ⚡</div>
                         <div class="profile-info">
                             <div class="profile-avatar">${currentUserData?.firstName?.charAt(0) || 'U'}</div>
                             <span>${currentUserData?.firstName} ${currentUserData?.lastName}</span>
+                            ${isAdmin ? `<button class="btn btn-admin" id="adminPanelBtn">👑 Админка</button>` : ''}
                             <button class="btn btn-secondary" id="logoutBtn">Выйти</button>
                         </div>
                     </div>
@@ -841,6 +878,18 @@
             `;
             
             document.getElementById('logoutBtn').onclick = logoutUser;
+            document.getElementById('logoBtn')?.addEventListener('click', () => {
+                if (isAdmin) {
+                    isAdminMode = false;
+                    renderMainScreen();
+                }
+            });
+            if (isAdmin) {
+                document.getElementById('adminPanelBtn')?.addEventListener('click', () => {
+                    isAdminMode = true;
+                    renderMainScreen();
+                });
+            }
             
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.onclick = () => {
@@ -937,7 +986,8 @@
             appDiv.innerHTML = `
                 <div class="header">
                     <div class="header-content">
-                        <div class="logo">HATERS ANON ⚡ АДМИН</div>
+                        <div class="logo" id="logoBtn">HATERS ANON ⚡</div>
+                        <button class="btn btn-secondary" id="backToUserBtn">← Назад</button>
                         <button class="btn btn-secondary" id="logoutBtn">Выйти</button>
                     </div>
                 </div>
@@ -960,7 +1010,7 @@
                                             <td><button class="btn btn-primary verify-telegram" data-id="${user.id}">Подтвердить</button></td>
                                         </tr>
                                     `).join('')}
-                                    ${unverifiedUsers.length === 0 ? '<tr><td colspan="5">✅ Все пользователи подтверждены</td>' : ''}
+                                    ${unverifiedUsers.length === 0 ? '<tr><td colspan="5">✅ Все пользователи подтверждены</td></tr>' : ''}
                                 </tbody>
                             </table>
                         </div>
@@ -988,6 +1038,15 @@
             `;
             
             document.getElementById('logoutBtn').onclick = logoutUser;
+            document.getElementById('logoBtn')?.addEventListener('click', () => {
+                isAdminMode = false;
+                renderMainScreen();
+            });
+            document.getElementById('backToUserBtn')?.addEventListener('click', () => {
+                isAdminMode = false;
+                renderMainScreen();
+            });
+            
             document.querySelectorAll('.verify-telegram').forEach(btn => {
                 btn.onclick = () => verifyTelegram(btn.dataset.id);
             });
@@ -1037,9 +1096,11 @@
                     currentUserData.emailVerified = true;
                 }
                 
+                isAdminMode = false;
                 renderMainScreen();
             } else {
                 currentUserData = null;
+                isAdminMode = false;
                 renderAuthScreen();
             }
         });
