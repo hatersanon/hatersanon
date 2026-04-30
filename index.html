@@ -98,6 +98,18 @@
             border: 1px solid #ff4d4d;
         }
 
+        .btn-warning {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 1px solid #ffc107;
+        }
+
+        .btn-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid #10b981;
+        }
+
         .card {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
@@ -172,6 +184,7 @@
         .question-text {
             font-size: 16px;
             margin-bottom: 10px;
+            word-wrap: break-word;
         }
 
         .question-meta {
@@ -179,6 +192,8 @@
             color: rgba(255, 255, 255, 0.5);
             display: flex;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 5px;
         }
 
         .tabs {
@@ -187,6 +202,7 @@
             margin-bottom: 20px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             padding-bottom: 10px;
+            flex-wrap: wrap;
         }
 
         .tab {
@@ -265,6 +281,10 @@
             background: #ef4444;
         }
 
+        .toast.info {
+            background: #3b82f6;
+        }
+
         @keyframes slideIn {
             from {
                 transform: translateX(100%);
@@ -307,6 +327,7 @@
             display: flex;
             align-items: center;
             gap: 15px;
+            flex-wrap: wrap;
         }
 
         .profile-avatar {
@@ -368,6 +389,7 @@
             font-size: 12px;
             display: block;
             margin-top: 5px;
+            color: rgba(255, 255, 255, 0.5);
         }
 
         .warning-box {
@@ -379,11 +401,12 @@
             text-align: center;
         }
 
-        .resend-btn {
+        .resend-btn, .delete-account-btn {
             margin-top: 10px;
-            background: none;
-            border: 1px solid #ffc107;
-            color: #ffc107;
+        }
+
+        .self-verify-btn {
+            margin-top: 15px;
         }
     </style>
 </head>
@@ -392,7 +415,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification, onAuthStateChanged, sendPasswordResetEmail, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, where, getDocs, getDoc, setDoc, doc, updateDoc, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -440,10 +463,14 @@
                 };
                 await setDoc(userRef, userData);
                 
-                showToast('Регистрация успешна! Подтвердите почту (письмо отправлено)', 'success');
+                showToast('✅ Регистрация успешна! Письмо с подтверждением отправлено на почту', 'success');
                 return true;
             } catch (error) {
-                showToast(error.message, 'error');
+                if (error.code === 'auth/email-already-in-use') {
+                    showToast('❌ Этот email уже зарегистрирован', 'error');
+                } else {
+                    showToast('❌ Ошибка: ' + error.message, 'error');
+                }
                 return false;
             }
         }
@@ -456,23 +483,64 @@
                 await user.reload();
                 
                 if (!user.emailVerified) {
-                    showToast('Подтвердите почту! Письмо отправлено на ' + email, 'error');
-                    await signOut(auth);
+                    showToast('📧 Подтвердите почту! Письмо отправлено на ' + email, 'error');
                     return false;
                 }
                 
-                showToast('Вход выполнен!', 'success');
+                showToast('✅ Вход выполнен!', 'success');
                 return true;
             } catch (error) {
-                showToast(error.message, 'error');
+                if (error.code === 'auth/user-not-found') {
+                    showToast('❌ Пользователь не найден', 'error');
+                } else if (error.code === 'auth/wrong-password') {
+                    showToast('❌ Неверный пароль', 'error');
+                } else {
+                    showToast('❌ Ошибка: ' + error.message, 'error');
+                }
                 return false;
             }
         }
 
         async function resendVerificationEmail() {
             if (auth.currentUser) {
-                await sendEmailVerification(auth.currentUser);
-                showToast('Письмо с подтверждением отправлено повторно!', 'success');
+                try {
+                    await sendEmailVerification(auth.currentUser);
+                    showToast('📧 Письмо отправлено повторно! Проверьте почту и спам', 'success');
+                } catch (error) {
+                    showToast('❌ Ошибка: ' + error.message, 'error');
+                }
+            }
+        }
+
+        async function deleteUnverifiedAccount() {
+            if (!auth.currentUser) return;
+            
+            const confirmed = confirm('⚠️ Вы точно хотите удалить аккаунт? После удаления вы сможете зарегистрироваться снова.');
+            if (!confirmed) return;
+            
+            try {
+                const userId = auth.currentUser.uid;
+                const userDoc = await getDoc(doc(db, 'users', userId));
+                if (userDoc.exists()) {
+                    await deleteDoc(doc(db, 'users', userId));
+                }
+                await deleteUser(auth.currentUser);
+                showToast('✅ Аккаунт удален', 'success');
+            } catch (error) {
+                showToast('❌ Ошибка: ' + error.message, 'error');
+            }
+        }
+
+        async function selfVerifyTelegram() {
+            if (!currentUser) return;
+            try {
+                const userRef = doc(db, 'users', currentUser.uid);
+                await updateDoc(userRef, { telegramVerified: true });
+                currentUserData.telegramVerified = true;
+                showToast('✅ Telegram подтвержден!', 'success');
+                renderMainScreen();
+            } catch (error) {
+                showToast('❌ Ошибка: ' + error.message, 'error');
             }
         }
 
@@ -480,7 +548,7 @@
             await signOut(auth);
             currentUser = null;
             currentUserData = null;
-            showToast('Вы вышли', 'success');
+            showToast('👋 Вы вышли', 'success');
             renderAuthScreen();
         }
 
@@ -521,10 +589,10 @@
                     createdAt: new Date().toISOString(),
                     isAnonymous: true
                 });
-                showToast('Вопрос отправлен анонимно!', 'success');
+                showToast('✅ Вопрос отправлен анонимно!', 'success');
                 closeModal();
             } catch (error) {
-                showToast('Ошибка: ' + error.message, 'error');
+                showToast('❌ Ошибка: ' + error.message, 'error');
             }
         }
 
@@ -560,13 +628,13 @@
         async function verifyTelegram(userId) {
             const userRef = doc(db, 'users', userId);
             await updateDoc(userRef, { telegramVerified: true });
-            showToast('Telegram подтверждён', 'success');
+            showToast('✅ Telegram подтверждён', 'success');
             loadAdminPanel();
         }
 
         async function deleteQuestion(questionId) {
             await deleteDoc(doc(db, 'questions', questionId));
-            showToast('Вопрос удалён', 'success');
+            showToast('🗑️ Вопрос удалён', 'success');
             loadAdminPanel();
         }
 
@@ -659,14 +727,14 @@
             document.getElementById('forgotPasswordBtn').onclick = async () => {
                 const email = document.getElementById('loginEmail').value;
                 if (!email) {
-                    showToast('Введите email для восстановления', 'error');
+                    showToast('Введите email', 'error');
                     return;
                 }
                 try {
                     await sendPasswordResetEmail(auth, email);
-                    showToast('Ссылка для сброса пароля отправлена на почту', 'success');
+                    showToast('📧 Ссылка для сброса пароля отправлена на почту', 'success');
                 } catch (error) {
-                    showToast(error.message, 'error');
+                    showToast('❌ Ошибка: ' + error.message, 'error');
                 }
             };
             
@@ -707,13 +775,15 @@
                         <div class="warning-box">
                             <h3>📧 Подтвердите email</h3>
                             <p>На почту <strong>${currentUser?.email}</strong> отправлено письмо с подтверждением.</p>
-                            <p>Перейдите по ссылке в письме, чтобы активировать аккаунт.</p>
-                            <button class="btn btn-warning resend-btn" id="resendEmailBtn">Отправить письмо повторно</button>
+                            <p>📌 Проверьте папку <strong>СПАМ</strong>, письмо могло попасть туда.</p>
+                            <button class="btn btn-warning resend-btn" id="resendEmailBtn">📧 Отправить письмо повторно</button>
+                            <button class="btn btn-danger delete-account-btn" id="deleteAccountBtn" style="margin-left: 10px;">🗑️ Удалить аккаунт</button>
                         </div>
                     </div>
                 `;
                 document.getElementById('logoutBtn').onclick = logoutUser;
                 document.getElementById('resendEmailBtn')?.addEventListener('click', resendVerificationEmail);
+                document.getElementById('deleteAccountBtn')?.addEventListener('click', deleteUnverifiedAccount);
                 return;
             }
             
@@ -729,11 +799,18 @@
                         <div class="card" style="text-align: center;">
                             <h2>⏳ Ожидание подтверждения Telegram</h2>
                             <p>Ваш Telegram аккаунт (@${currentUserData?.telegramNickname}) ещё не подтверждён администратором.</p>
-                            <p>Свяжитесь с администратором: <strong>sad.spotty@gmail.com</strong></p>
+                            ${currentUser?.email === 'sad.spotty@gmail.com' ? `
+                                <button class="btn btn-success self-verify-btn" id="selfVerifyBtn">✅ Подтвердить мой Telegram</button>
+                            ` : ''}
+                            <button class="btn btn-danger delete-account-btn" id="deleteAccountBtn" style="margin-top: 15px;">🗑️ Удалить аккаунт</button>
                         </div>
                     </div>
                 `;
                 document.getElementById('logoutBtn').onclick = logoutUser;
+                document.getElementById('deleteAccountBtn')?.addEventListener('click', deleteUnverifiedAccount);
+                if (currentUser?.email === 'sad.spotty@gmail.com') {
+                    document.getElementById('selfVerifyBtn')?.addEventListener('click', selfVerifyTelegram);
+                }
                 return;
             }
             
@@ -883,7 +960,7 @@
                                             <td><button class="btn btn-primary verify-telegram" data-id="${user.id}">Подтвердить</button></td>
                                         </tr>
                                     `).join('')}
-                                    ${unverifiedUsers.length === 0 ? '<tr><td colspan="5">✅ Все пользователи подтверждены</td></tr>' : ''}
+                                    ${unverifiedUsers.length === 0 ? '<tr><td colspan="5">✅ Все пользователи подтверждены</td>' : ''}
                                 </tbody>
                             </table>
                         </div>
@@ -898,7 +975,7 @@
                                         <tr>
                                             <td>${escapeHtml(q.fromName)}</td>
                                             <td>${escapeHtml(q.toName)}</td>
-                                            <td>${escapeHtml(q.text.substring(0, 100))}</td>
+                                            <td>${escapeHtml(q.text.substring(0, 100))}${q.text.length > 100 ? '...' : ''}</td>
                                             <td>${new Date(q.createdAt).toLocaleString()}</td>
                                             <td><button class="btn btn-danger delete-question" data-id="${q.id}">Удалить</button></td>
                                         </tr>
