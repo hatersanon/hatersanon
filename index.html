@@ -4,400 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>HATERS ANON - Анонимные вопросы</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
-            min-height: 100vh;
-            color: #fff;
-        }
-
-        /* Контейнеры */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        /* Шапка */
-        .header {
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            background: linear-gradient(135deg, #ff4d4d, #f9cb28);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-
-        .logo span {
-            font-size: 14px;
-            color: #ff4d4d;
-            background: none;
-            -webkit-background-clip: unset;
-            background-clip: unset;
-        }
-
-        /* Кнопки */
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #ff4d4d, #ff6b4d);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(255, 77, 77, 0.4);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .btn-danger {
-            background: rgba(255, 77, 77, 0.2);
-            color: #ff4d4d;
-            border: 1px solid #ff4d4d;
-        }
-
-        /* Карточки */
-        .card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        /* Формы */
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .form-group input, .form-group textarea, .form-group select {
-            width: 100%;
-            padding: 12px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            color: white;
-            font-size: 14px;
-        }
-
-        .form-group input:focus, .form-group textarea:focus {
-            outline: none;
-            border-color: #ff4d4d;
-        }
-
-        /* Сетка пользователей */
-        .users-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .user-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .user-card:hover {
-            transform: translateY(-3px);
-            background: rgba(255, 255, 255, 0.1);
-            border-color: #ff4d4d;
-        }
-
-        .user-name {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        /* Вопросы */
-        .question-item {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
-            border-left: 3px solid #ff4d4d;
-        }
-
-        .question-text {
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-
-        .question-meta {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.5);
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .badge {
-            background: #ff4d4d;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        /* Табы */
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding-bottom: 10px;
-        }
-
-        .tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .tab.active {
-            background: #ff4d4d;
-            color: white;
-        }
-
-        .tab:not(.active):hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        /* Поиск */
-        .search-bar {
-            margin-bottom: 20px;
-        }
-
-        .search-bar input {
-            width: 100%;
-            padding: 12px 20px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 25px;
-            color: white;
-            font-size: 16px;
-        }
-
-        /* Модальное окно */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: linear-gradient(135deg, #1a1a2e, #0a0a0a);
-            border-radius: 20px;
-            padding: 30px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        /* Уведомления */
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 12px 20px;
-            border-radius: 8px;
-            z-index: 2000;
-            animation: slideIn 0.3s ease;
-        }
-
-        .toast.success {
-            background: #10b981;
-        }
-
-        .toast.error {
-            background: #ef4444;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        /* Админ панель */
-        .admin-panel {
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 16px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-
-        .admin-table {
-            width: 100%;
-            overflow-x: auto;
-        }
-
-        .admin-table table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .admin-table th, .admin-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .admin-table th {
-            background: rgba(255, 77, 77, 0.2);
-        }
-
-        .telegram-pending {
-            background: rgba(255, 193, 7, 0.2);
-            color: #ffc107;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 12px;
-        }
-
-        .telegram-confirmed {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 12px;
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-        }
-
-        /* Профиль */
-        .profile-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .profile-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #ff4d4d;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <div class="header-content">
-            <div class="logo">
-                HATERS ANON <span>⚡</span>
-            </div>
-            <div id="auth-section"></div>
-        </div>
-    </div>
-
-    <div class="container" id="app">
-        <div id="content"></div>
-    </div>
-
-    <!-- Модальное окно для вопроса -->
-    <div id="questionModal" class="modal">
-        <div class="modal-content">
-            <h2 id="modalTitle">Задать вопрос</h2>
-            <div class="form-group">
-                <label>Ваш вопрос</label>
-                <textarea id="questionText" rows="4" placeholder="Введите ваш анонимный вопрос..."></textarea>
-            </div>
-            <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button class="btn btn-secondary" onclick="closeModal()">Отмена</button>
-                <button class="btn btn-primary" id="sendQuestionBtn">Отправить</button>
-            </div>
-        </div>
-    </div>
-
+    <!-- Firebase SDKs -->
     <script type="module">
         // Импорты Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, where, getDocs, getDoc, setDoc, doc, updateDoc, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         // Конфигурация Firebase
@@ -415,7 +26,6 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const provider = new GoogleAuthProvider();
 
         // Глобальные переменные
         let currentUser = null;
@@ -431,114 +41,77 @@
             setTimeout(() => toast.remove(), 3000);
         }
 
-        // Регистрация/обновление пользователя
-        async function registerUser(user, telegramNickname, firstName, lastName) {
-            const userRef = doc(db, 'users', user.uid);
-            const userData = {
-                email: user.email,
-                firstName: firstName,
-                lastName: lastName,
-                telegramNickname: telegramNickname,
-                telegramVerified: false,
-                emailVerified: user.emailVerified,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            };
-            await setDoc(userRef, userData, { merge: true });
-            return userData;
-        }
-
-        // Проверка, зарегистрирован ли пользователь
-        async function checkUserRegistration(user) {
-            const userRef = doc(db, 'users', user.uid);
-            const userSnap = await getDoc(userRef);
-            if (userSnap.exists()) {
-                return userSnap.data();
-            }
-            return null;
-        }
-
-        // Вход через Google
-        async function signInWithGoogle() {
+        // Регистрация пользователя
+        async function registerUser(email, password, firstName, lastName, telegramNickname) {
             try {
-                const result = await signInWithPopup(auth, provider);
-                const user = result.user;
+                // Создаем пользователя в Auth
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
                 
-                // Проверяем, есть ли уже пользователь в БД
-                let userData = await checkUserRegistration(user);
+                // Отправляем подтверждение почты
+                await sendEmailVerification(user);
                 
-                if (!userData) {
-                    // Новый пользователь - запрашиваем данные
-                    showRegistrationModal(user);
-                } else if (!userData.telegramVerified) {
-                    showToast('Ваш аккаунт ожидает подтверждения Telegram администратором', 'error');
-                } else {
-                    showToast('Добро пожаловать!', 'success');
-                    loadMainContent();
-                }
+                // Сохраняем данные в Firestore
+                const userRef = doc(db, 'users', user.uid);
+                const userData = {
+                    email: email,
+                    firstName: firstName,
+                    lastName: lastName,
+                    telegramNickname: telegramNickname,
+                    telegramVerified: false,
+                    emailVerified: false,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                await setDoc(userRef, userData);
+                
+                showToast('Регистрация успешна! Подтвердите почту и ожидайте подтверждения Telegram', 'success');
+                return true;
+            } catch (error) {
+                console.error('Ошибка регистрации:', error);
+                showToast(error.message, 'error');
+                return false;
+            }
+        }
+
+        // Вход пользователя
+        async function loginUser(email, password) {
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                showToast('Вход выполнен успешно!', 'success');
+                return true;
             } catch (error) {
                 console.error('Ошибка входа:', error);
-                showToast('Ошибка входа: ' + error.message, 'error');
+                showToast(error.message, 'error');
+                return false;
             }
-        }
-
-        // Модальное окно регистрации
-        function showRegistrationModal(user) {
-            const modal = document.createElement('div');
-            modal.className = 'modal active';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <h2>Завершение регистрации</h2>
-                    <div class="form-group">
-                        <label>Имя</label>
-                        <input type="text" id="regFirstName" placeholder="Ваше имя" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Фамилия</label>
-                        <input type="text" id="regLastName" placeholder="Ваша фамилия" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Telegram Nickname (без @)</label>
-                        <input type="text" id="regTelegram" placeholder="username" required>
-                        <small style="color: rgba(255,255,255,0.5);">Администратор подтвердит ваш Telegram вручную</small>
-                    </div>
-                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                        <button class="btn btn-secondary" id="cancelRegBtn">Отмена</button>
-                        <button class="btn btn-primary" id="completeRegBtn">Завершить</button>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-            
-            document.getElementById('cancelRegBtn').onclick = () => {
-                signOut(auth);
-                modal.remove();
-            };
-            
-            document.getElementById('completeRegBtn').onclick = async () => {
-                const firstName = document.getElementById('regFirstName').value.trim();
-                const lastName = document.getElementById('regLastName').value.trim();
-                const telegramNickname = document.getElementById('regTelegram').value.trim();
-                
-                if (!firstName || !lastName || !telegramNickname) {
-                    showToast('Заполните все поля', 'error');
-                    return;
-                }
-                
-                await registerUser(user, telegramNickname, firstName, lastName);
-                modal.remove();
-                showToast('Регистрация завершена! Ожидайте подтверждения Telegram', 'success');
-                loadMainContent();
-            };
         }
 
         // Выход
-        async function logout() {
+        async function logoutUser() {
             await signOut(auth);
             currentUser = null;
             currentUserData = null;
-            renderAuthSection();
-            renderContent();
+            showToast('Вы вышли из аккаунта', 'success');
+            renderAuthScreen();
+        }
+
+        // Проверка данных пользователя
+        async function getUserData(userId) {
+            const userRef = doc(db, 'users', userId);
+            const userSnap = await getDoc(userRef);
+            return userSnap.exists() ? userSnap.data() : null;
+        }
+
+        // Обновление статуса верификации почты
+        async function checkAndUpdateEmailVerification(user) {
+            await user.reload();
+            if (user.emailVerified) {
+                const userRef = doc(db, 'users', user.uid);
+                await updateDoc(userRef, { emailVerified: true });
+                return true;
+            }
+            return false;
         }
 
         // Получить всех пользователей
@@ -554,8 +127,9 @@
             if (!searchTerm) return users;
             const term = searchTerm.toLowerCase();
             return users.filter(user => 
-                user.firstName?.toLowerCase().includes(term) || 
-                user.lastName?.toLowerCase().includes(term)
+                (user.firstName?.toLowerCase().includes(term) || 
+                 user.lastName?.toLowerCase().includes(term)) &&
+                user.id !== currentUser?.uid
             );
         }
 
@@ -593,7 +167,6 @@
             const snapshot = await getDocs(q);
             const questions = await Promise.all(snapshot.docs.map(async (docSnap) => {
                 const data = docSnap.data();
-                // Получаем данные отправителя/получателя
                 if (type === 'received') {
                     const fromUser = await getUserData(data.fromUserId);
                     return { id: docSnap.id, ...data, fromUserName: fromUser ? `${fromUser.firstName} ${fromUser.lastName}` : 'Неизвестный' };
@@ -603,13 +176,6 @@
                 }
             }));
             return questions;
-        }
-
-        // Получить данные пользователя
-        async function getUserData(userId) {
-            const userRef = doc(db, 'users', userId);
-            const userSnap = await getDoc(userRef);
-            return userSnap.exists() ? userSnap.data() : null;
         }
 
         // Админские функции
@@ -650,86 +216,175 @@
             return questions;
         }
 
-        // Рендер секции авторизации
-        function renderAuthSection() {
-            const section = document.getElementById('auth-section');
-            if (currentUser) {
-                section.innerHTML = `
-                    <div class="profile-info">
-                        <div class="profile-avatar">${currentUserData?.firstName?.charAt(0) || 'U'}</div>
-                        <span>${currentUserData?.firstName} ${currentUserData?.lastName}</span>
-                        <button class="btn btn-secondary" onclick="window.logout()">Выйти</button>
+        // Рендер экрана авторизации
+        function renderAuthScreen() {
+            const appDiv = document.getElementById('app');
+            appDiv.innerHTML = `
+                <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
+                    <div class="auth-container">
+                        <div class="logo-large">HATERS ANON</div>
+                        <div class="tabs-auth">
+                            <div class="tab-auth active" data-auth-tab="login">Вход</div>
+                            <div class="tab-auth" data-auth-tab="register">Регистрация</div>
+                        </div>
+                        
+                        <!-- Форма входа -->
+                        <div id="loginForm" class="auth-form active">
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="loginEmail" placeholder="your@email.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Пароль</label>
+                                <input type="password" id="loginPassword" placeholder="••••••••">
+                            </div>
+                            <button class="btn btn-primary" id="loginBtn" style="width: 100%;">Войти</button>
+                        </div>
+                        
+                        <!-- Форма регистрации -->
+                        <div id="registerForm" class="auth-form">
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="regEmail" placeholder="your@email.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Пароль</label>
+                                <input type="password" id="regPassword" placeholder="минимум 6 символов">
+                            </div>
+                            <div class="form-group">
+                                <label>Имя</label>
+                                <input type="text" id="regFirstName" placeholder="Ваше имя">
+                            </div>
+                            <div class="form-group">
+                                <label>Фамилия</label>
+                                <input type="text" id="regLastName" placeholder="Ваша фамилия">
+                            </div>
+                            <div class="form-group">
+                                <label>Telegram Nickname (без @)</label>
+                                <input type="text" id="regTelegram" placeholder="username">
+                                <small style="color: rgba(255,255,255,0.5);">Администратор подтвердит ваш Telegram вручную</small>
+                            </div>
+                            <button class="btn btn-primary" id="registerBtn" style="width: 100%;">Зарегистрироваться</button>
+                        </div>
                     </div>
-                `;
-            } else {
-                section.innerHTML = `<button class="btn btn-primary" id="googleSignInBtn">Войти через Google</button>`;
-                setTimeout(() => {
-                    const btn = document.getElementById('googleSignInBtn');
-                    if (btn) btn.onclick = signInWithGoogle;
-                }, 100);
-            }
-        }
-
-        // Основной контент
-        function loadMainContent() {
-            if (!currentUserData?.telegramVerified) {
-                renderUnverifiedContent();
-                return;
-            }
-            renderContent();
-        }
-
-        function renderUnverifiedContent() {
-            const content = document.getElementById('content');
-            content.innerHTML = `
-                <div class="card" style="text-align: center;">
-                    <h2>⏳ Ожидание подтверждения</h2>
-                    <p>Ваш Telegram аккаунт еще не подтвержден администратором.</p>
-                    <p>Пожалуйста, подождите или свяжитесь с администратором: <strong>sad.spotty@gmail.com</strong></p>
                 </div>
             `;
+            
+            // Переключение табов
+            document.querySelectorAll('.tab-auth').forEach(tab => {
+                tab.onclick = () => {
+                    document.querySelectorAll('.tab-auth').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    const formType = tab.dataset.authTab;
+                    document.getElementById('loginForm').classList.toggle('active', formType === 'login');
+                    document.getElementById('registerForm').classList.toggle('active', formType === 'register');
+                };
+            });
+            
+            // Вход
+            document.getElementById('loginBtn').onclick = async () => {
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                if (email && password) {
+                    await loginUser(email, password);
+                } else {
+                    showToast('Заполните все поля', 'error');
+                }
+            };
+            
+            // Регистрация
+            document.getElementById('registerBtn').onclick = async () => {
+                const email = document.getElementById('regEmail').value;
+                const password = document.getElementById('regPassword').value;
+                const firstName = document.getElementById('regFirstName').value;
+                const lastName = document.getElementById('regLastName').value;
+                const telegram = document.getElementById('regTelegram').value;
+                
+                if (!email || !password || !firstName || !lastName || !telegram) {
+                    showToast('Заполните все поля', 'error');
+                    return;
+                }
+                
+                if (password.length < 6) {
+                    showToast('Пароль должен быть минимум 6 символов', 'error');
+                    return;
+                }
+                
+                await registerUser(email, password, firstName, lastName, telegram);
+            };
         }
-
+        
+        // Рендер главного экрана
         let currentTab = 'ask';
         let currentSearchTerm = '';
-
-        async function renderContent() {
-            const content = document.getElementById('content');
-            
-            if (currentUser && currentUser.email === 'sad.spotty@gmail.com') {
-                await loadAdminPanel();
-                return;
-            }
+        
+        function renderMainScreen() {
+            const appDiv = document.getElementById('app');
             
             if (!currentUserData?.telegramVerified) {
-                renderUnverifiedContent();
+                appDiv.innerHTML = `
+                    <div class="header">
+                        <div class="header-content">
+                            <div class="logo">HATERS ANON ⚡</div>
+                            <button class="btn btn-secondary" id="logoutBtn">Выйти</button>
+                        </div>
+                    </div>
+                    <div class="container">
+                        <div class="card" style="text-align: center;">
+                            <h2>⏳ Ожидание подтверждения</h2>
+                            <p>Ваш Telegram аккаунт еще не подтвержден администратором.</p>
+                            <p>Пожалуйста, подождите или свяжитесь с администратором: <strong>sad.spotty@gmail.com</strong></p>
+                            ${!currentUserData?.emailVerified ? '<p style="color: #ffc107;">⚠️ Также подтвердите вашу почту (письмо отправлено)</p>' : ''}
+                        </div>
+                    </div>
+                `;
+                document.getElementById('logoutBtn').onclick = logoutUser;
                 return;
             }
             
-            content.innerHTML = `
-                <div class="tabs">
-                    <div class="tab ${currentTab === 'ask' ? 'active' : ''}" data-tab="ask">✍️ Задать вопрос</div>
-                    <div class="tab ${currentTab === 'received' ? 'active' : ''}" data-tab="received">📥 Мои вопросы (${currentUser ? 'полученные' : ''})</div>
-                    <div class="tab ${currentTab === 'sent' ? 'active' : ''}" data-tab="sent">📤 Отправленные вопросы</div>
+            if (currentUser?.email === 'sad.spotty@gmail.com') {
+                loadAdminPanel();
+                return;
+            }
+            
+            appDiv.innerHTML = `
+                <div class="header">
+                    <div class="header-content">
+                        <div class="logo">HATERS ANON ⚡</div>
+                        <div class="profile-info">
+                            <div class="profile-avatar">${currentUserData?.firstName?.charAt(0) || 'U'}</div>
+                            <span>${currentUserData?.firstName} ${currentUserData?.lastName}</span>
+                            <button class="btn btn-secondary" id="logoutBtn">Выйти</button>
+                        </div>
+                    </div>
                 </div>
-                <div id="tabContent"></div>
+                <div class="container">
+                    <div class="tabs">
+                        <div class="tab ${currentTab === 'ask' ? 'active' : ''}" data-tab="ask">✍️ Задать вопрос</div>
+                        <div class="tab ${currentTab === 'received' ? 'active' : ''}" data-tab="received">📥 Мои вопросы</div>
+                        <div class="tab ${currentTab === 'sent' ? 'active' : ''}" data-tab="sent">📤 Отправленные</div>
+                    </div>
+                    <div id="tabContent"></div>
+                </div>
             `;
+            
+            document.getElementById('logoutBtn').onclick = logoutUser;
             
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.onclick = () => {
                     currentTab = tab.dataset.tab;
-                    renderContent();
+                    renderMainScreen();
                 };
             });
             
             const tabContent = document.getElementById('tabContent');
             
             if (currentTab === 'ask') {
-                await renderAskTab(tabContent);
+                renderAskTab(tabContent);
             } else if (currentTab === 'received') {
-                await renderReceivedTab(tabContent);
+                renderReceivedTab(tabContent);
             } else if (currentTab === 'sent') {
-                await renderSentTab(tabContent);
+                renderSentTab(tabContent);
             }
         }
         
@@ -751,17 +406,16 @@
             
             async function loadUsersList() {
                 const users = await searchUsers(currentSearchTerm);
-                const filteredUsers = users.filter(user => user.id !== currentUser.uid);
                 const usersList = document.getElementById('usersList');
                 
-                if (filteredUsers.length === 0) {
+                if (users.length === 0) {
                     usersList.innerHTML = '<div class="card">Пользователи не найдены</div>';
                     return;
                 }
                 
-                usersList.innerHTML = filteredUsers.map(user => `
-                    <div class="user-card" data-userid="${user.id}" data-username="${user.firstName} ${user.lastName}">
-                        <div class="user-name">${user.firstName} ${user.lastName}</div>
+                usersList.innerHTML = users.map(user => `
+                    <div class="user-card" data-userid="${user.id}" data-username="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}">
+                        <div class="user-name">${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</div>
                         <button class="btn btn-primary ask-btn" style="margin-top: 10px;">Задать вопрос</button>
                     </div>
                 `).join('');
@@ -790,7 +444,7 @@
                 <div class="question-item">
                     <div class="question-text">${escapeHtml(q.text)}</div>
                     <div class="question-meta">
-                        <span>От: ${q.fromUserName}</span>
+                        <span>От: ${escapeHtml(q.fromUserName)}</span>
                         <span>${new Date(q.createdAt).toLocaleString()}</span>
                     </div>
                 </div>
@@ -810,7 +464,7 @@
                 <div class="question-item">
                     <div class="question-text">${escapeHtml(q.text)}</div>
                     <div class="question-meta">
-                        <span>Кому: ${q.toUserName}</span>
+                        <span>Кому: ${escapeHtml(q.toUserName)}</span>
                         <span>${new Date(q.createdAt).toLocaleString()}</span>
                     </div>
                 </div>
@@ -818,48 +472,67 @@
         }
         
         async function loadAdminPanel() {
-            const content = document.getElementById('content');
+            const appDiv = document.getElementById('app');
             const unverifiedUsers = await getUnverifiedTelegramUsers();
             const allQuestions = await getAllQuestionsAdmin();
             
-            content.innerHTML = `
-                <h2>👑 Админ-панель</h2>
-                <div class="admin-panel">
-                    <h3>📱 Подтверждение Telegram (${unverifiedUsers.length})</h3>
-                    <div class="admin-table">
-                        <table>
-                            <thead>
-                                <tr><th>Имя Фамилия</th><th>Email</th><th>Telegram</th><th>Действие</th></tr>
-                            </thead>
-                            <tbody>
-                                ${unverifiedUsers.map(user => `
-                                    <tr><td>${user.firstName} ${user.lastName}</td><td>${user.email}</td><td>@${user.telegramNickname}</td>
-                                    <td><button class="btn btn-primary verify-telegram" data-id="${user.id}">Подтвердить</button></td></tr>
-                                `).join('')}
-                                ${unverifiedUsers.length === 0 ? '<tr><td colspan="4">Нет пользователей на подтверждение</td></tr>' : ''}
-                            </tbody>
-                        </table>
+            appDiv.innerHTML = `
+                <div class="header">
+                    <div class="header-content">
+                        <div class="logo">HATERS ANON ⚡ АДМИН</div>
+                        <button class="btn btn-secondary" id="logoutBtn">Выйти</button>
                     </div>
                 </div>
-                
-                <div class="admin-panel">
-                    <h3>❓ Все вопросы (${allQuestions.length})</h3>
-                    <div class="admin-table">
-                        <table>
-                            <thead>
-                                <tr><th>От кого</th><th>Кому</th><th>Вопрос</th><th>Дата</th><th>Действие</th></tr>
-                            </thead>
-                            <tbody>
-                                ${allQuestions.map(q => `
-                                    <tr><td>${escapeHtml(q.fromName)}</td><td>${escapeHtml(q.toName)}</td><td>${escapeHtml(q.text.substring(0, 100))}</td>
-                                    <td>${new Date(q.createdAt).toLocaleString()}</td>
-                                    <td><button class="btn btn-danger delete-question" data-id="${q.id}">Удалить</button></td></tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                <div class="container">
+                    <h2>👑 Админ-панель</h2>
+                    <div class="admin-panel">
+                        <h3>📱 Подтверждение Telegram (${unverifiedUsers.length})</h3>
+                        <div class="admin-table">
+                            <table>
+                                <thead>
+                                    <tr><th>Имя Фамилия</th><th>Email</th><th>Telegram</th><th>Почта подтверждена</th><th>Действие</th></tr>
+                                </thead>
+                                <tbody>
+                                    ${unverifiedUsers.map(user => `
+                                        <tr>
+                                            <td>${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</td>
+                                            <td>${escapeHtml(user.email)}</td>
+                                            <td>@${escapeHtml(user.telegramNickname)}</td>
+                                            <td>${user.emailVerified ? '✅ Да' : '❌ Нет'}</td>
+                                            <td><button class="btn btn-primary verify-telegram" data-id="${user.id}">Подтвердить TG</button></td>
+                                        </tr>
+                                    `).join('')}
+                                    ${unverifiedUsers.length === 0 ? '<tr><td colspan="5">Нет пользователей на подтверждение</td></tr>' : ''}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-panel">
+                        <h3>❓ Все вопросы (${allQuestions.length})</h3>
+                        <div class="admin-table">
+                            <table>
+                                <thead>
+                                    <tr><th>От кого</th><th>Кому</th><th>Вопрос</th><th>Дата</th><th>Действие</th></tr>
+                                </thead>
+                                <tbody>
+                                    ${allQuestions.map(q => `
+                                        <tr>
+                                            <td>${escapeHtml(q.fromName)}</td>
+                                            <td>${escapeHtml(q.toName)}</td>
+                                            <td>${escapeHtml(q.text.substring(0, 100))}</td>
+                                            <td>${new Date(q.createdAt).toLocaleString()}</td>
+                                            <td><button class="btn btn-danger delete-question" data-id="${q.id}">Удалить</button></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             `;
+            
+            document.getElementById('logoutBtn').onclick = logoutUser;
             
             document.querySelectorAll('.verify-telegram').forEach(btn => {
                 btn.onclick = () => verifyTelegram(btn.dataset.id);
@@ -873,61 +546,450 @@
         function openQuestionModal(userId, userName) {
             selectedUser = { id: userId, name: userName };
             const modal = document.getElementById('questionModal');
-            document.getElementById('modalTitle').innerHTML = `Задать вопрос ${userName}`;
-            document.getElementById('questionText').value = '';
-            modal.classList.add('active');
+            if (modal) {
+                document.getElementById('modalTitle').innerHTML = `Задать вопрос ${userName}`;
+                document.getElementById('questionText').value = '';
+                modal.classList.add('active');
+            }
         }
         
         function closeModal() {
-            document.getElementById('questionModal').classList.remove('active');
+            const modal = document.getElementById('questionModal');
+            if (modal) modal.classList.remove('active');
             selectedUser = null;
         }
         
         function escapeHtml(text) {
+            if (!text) return '';
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
         
-        // Глобальные функции для onclick
-        window.logout = logout;
-        window.closeModal = closeModal;
-        
-        // Отправка вопроса
-        document.addEventListener('click', (e) => {
-            if (e.target.id === 'sendQuestionBtn') {
-                if (selectedUser) {
-                    const text = document.getElementById('questionText').value;
-                    sendQuestion(selectedUser.id, text);
-                }
-            }
-        });
-        
         // Слушатель авторизации
         onAuthStateChanged(auth, async (user) => {
             currentUser = user;
+            
             if (user) {
-                const userData = await checkUserRegistration(user);
+                const userData = await getUserData(user.uid);
                 currentUserData = userData;
-                renderAuthSection();
-                loadMainContent();
+                
+                if (!userData) {
+                    // Пользователь есть в Auth, но нет в Firestore - выходим
+                    await logoutUser();
+                    return;
+                }
+                
+                // Проверяем верификацию почты
+                if (user.email !== 'sad.spotty@gmail.com') {
+                    await checkAndUpdateEmailVerification(user);
+                    const updatedData = await getUserData(user.uid);
+                    currentUserData = updatedData;
+                }
+                
+                renderMainScreen();
             } else {
                 currentUserData = null;
-                renderAuthSection();
-                const content = document.getElementById('content');
-                content.innerHTML = `
-                    <div class="card" style="text-align: center;">
-                        <h2>Добро пожаловать в HATERS ANON</h2>
-                        <p>Задавайте анонимные вопросы другим пользователям</p>
-                        <button class="btn btn-primary" id="landingSignIn">Войти через Google</button>
+                renderAuthScreen();
+            }
+        });
+        
+        // Добавляем модальное окно в body
+        const modalHtml = `
+            <div id="questionModal" class="modal">
+                <div class="modal-content">
+                    <h2 id="modalTitle">Задать вопрос</h2>
+                    <div class="form-group">
+                        <label>Ваш вопрос</label>
+                        <textarea id="questionText" rows="4" placeholder="Введите ваш анонимный вопрос..."></textarea>
                     </div>
-                `;
-                setTimeout(() => {
-                    const btn = document.getElementById('landingSignIn');
-                    if (btn) btn.onclick = signInWithGoogle;
-                }, 100);
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="btn btn-secondary" onclick="window.closeModalFromGlobal()">Отмена</button>
+                        <button class="btn btn-primary" id="sendQuestionBtn">Отправить</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        window.closeModalFromGlobal = closeModal;
+        
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'sendQuestionBtn' && selectedUser) {
+                const text = document.getElementById('questionText')?.value;
+                if (text) sendQuestion(selectedUser.id, text);
             }
         });
     </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #ff4d4d, #f9cb28);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .logo-large {
+            font-size: 48px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #ff4d4d, #f9cb28);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff4d4d, #ff6b4d);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 77, 77, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-danger {
+            background: rgba(255, 77, 77, 0.2);
+            color: #ff4d4d;
+            border: 1px solid #ff4d4d;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #ff4d4d;
+        }
+
+        .users-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .user-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .user-card:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #ff4d4d;
+        }
+
+        .user-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .question-item {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 3px solid #ff4d4d;
+        }
+
+        .question-text {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .question-meta {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: #ff4d4d;
+            color: white;
+        }
+
+        .tab:not(.active):hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .search-bar {
+            margin-bottom: 20px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 12px 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            color: white;
+            font-size: 16px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e, #0a0a0a);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success {
+            background: #10b981;
+        }
+
+        .toast.error {
+            background: #ef4444;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .admin-panel {
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .admin-table {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .admin-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .admin-table th, .admin-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .admin-table th {
+            background: rgba(255, 77, 77, 0.2);
+        }
+
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #ff4d4d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .auth-container {
+            max-width: 450px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tabs-auth {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-auth {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.3s ease;
+        }
+
+        .tab-auth.active {
+            background: #ff4d4d;
+            color: white;
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        small {
+            font-size: 12px;
+            display: block;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
 </body>
 </html>
