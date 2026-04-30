@@ -4,624 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>HATERS ANON - Анонимные вопросы</title>
-    <!-- Firebase SDKs -->
-    <script type="module">
-        // Импорты Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs, getDoc, setDoc, doc, updateDoc, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        // Конфигурация Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyCFnjivHF82OH0e5o5mnZp1_1UGkO63_QE",
-            authDomain: "hatersanon.firebaseapp.com",
-            projectId: "hatersanon",
-            storageBucket: "hatersanon.firebasestorage.app",
-            messagingSenderId: "759284962705",
-            appId: "1:759284962705:web:e3fe811230dd9bdee63630",
-            measurementId: "G-XPEHPWXQH0"
-        };
-
-        // Инициализация
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // Глобальные переменные
-        let currentUser = null;
-        let currentUserData = null;
-        let selectedUser = null;
-
-        // Вспомогательные функции
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
-
-        // Регистрация пользователя
-        async function registerUser(email, password, firstName, lastName, telegramNickname) {
-            try {
-                // Создаем пользователя в Auth
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-                
-                // Отправляем подтверждение почты
-                await sendEmailVerification(user);
-                
-                // Сохраняем данные в Firestore
-                const userRef = doc(db, 'users', user.uid);
-                const userData = {
-                    email: email,
-                    firstName: firstName,
-                    lastName: lastName,
-                    telegramNickname: telegramNickname,
-                    telegramVerified: false,
-                    emailVerified: false,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                };
-                await setDoc(userRef, userData);
-                
-                showToast('Регистрация успешна! Подтвердите почту и ожидайте подтверждения Telegram', 'success');
-                return true;
-            } catch (error) {
-                console.error('Ошибка регистрации:', error);
-                showToast(error.message, 'error');
-                return false;
-            }
-        }
-
-        // Вход пользователя
-        async function loginUser(email, password) {
-            try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                showToast('Вход выполнен успешно!', 'success');
-                return true;
-            } catch (error) {
-                console.error('Ошибка входа:', error);
-                showToast(error.message, 'error');
-                return false;
-            }
-        }
-
-        // Выход
-        async function logoutUser() {
-            await signOut(auth);
-            currentUser = null;
-            currentUserData = null;
-            showToast('Вы вышли из аккаунта', 'success');
-            renderAuthScreen();
-        }
-
-        // Проверка данных пользователя
-        async function getUserData(userId) {
-            const userRef = doc(db, 'users', userId);
-            const userSnap = await getDoc(userRef);
-            return userSnap.exists() ? userSnap.data() : null;
-        }
-
-        // Обновление статуса верификации почты
-        async function checkAndUpdateEmailVerification(user) {
-            await user.reload();
-            if (user.emailVerified) {
-                const userRef = doc(db, 'users', user.uid);
-                await updateDoc(userRef, { emailVerified: true });
-                return true;
-            }
-            return false;
-        }
-
-        // Получить всех пользователей
-        async function getAllUsers() {
-            const usersRef = collection(db, 'users');
-            const snapshot = await getDocs(usersRef);
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        }
-
-        // Поиск пользователей
-        async function searchUsers(searchTerm) {
-            const users = await getAllUsers();
-            if (!searchTerm) return users;
-            const term = searchTerm.toLowerCase();
-            return users.filter(user => 
-                (user.firstName?.toLowerCase().includes(term) || 
-                 user.lastName?.toLowerCase().includes(term)) &&
-                user.id !== currentUser?.uid
-            );
-        }
-
-        // Отправить вопрос
-        async function sendQuestion(toUserId, text) {
-            if (!text.trim()) {
-                showToast('Введите вопрос', 'error');
-                return;
-            }
-            
-            try {
-                await addDoc(collection(db, 'questions'), {
-                    fromUserId: currentUser.uid,
-                    toUserId: toUserId,
-                    text: text,
-                    createdAt: new Date().toISOString(),
-                    isAnonymous: true
-                });
-                showToast('Вопрос отправлен анонимно!', 'success');
-                closeModal();
-            } catch (error) {
-                showToast('Ошибка отправки: ' + error.message, 'error');
-            }
-        }
-
-        // Получить вопросы пользователя
-        async function getUserQuestions(userId, type = 'received') {
-            const questionsRef = collection(db, 'questions');
-            let q;
-            if (type === 'received') {
-                q = query(questionsRef, where('toUserId', '==', userId), orderBy('createdAt', 'desc'));
-            } else {
-                q = query(questionsRef, where('fromUserId', '==', userId), orderBy('createdAt', 'desc'));
-            }
-            const snapshot = await getDocs(q);
-            const questions = await Promise.all(snapshot.docs.map(async (docSnap) => {
-                const data = docSnap.data();
-                if (type === 'received') {
-                    const fromUser = await getUserData(data.fromUserId);
-                    return { id: docSnap.id, ...data, fromUserName: fromUser ? `${fromUser.firstName} ${fromUser.lastName}` : 'Неизвестный' };
-                } else {
-                    const toUser = await getUserData(data.toUserId);
-                    return { id: docSnap.id, ...data, toUserName: toUser ? `${toUser.firstName} ${toUser.lastName}` : 'Неизвестный' };
-                }
-            }));
-            return questions;
-        }
-
-        // Админские функции
-        async function getUnverifiedTelegramUsers() {
-            const usersRef = collection(db, 'users');
-            const q = query(usersRef, where('telegramVerified', '==', false));
-            const snapshot = await getDocs(q);
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        }
-
-        async function verifyTelegram(userId) {
-            const userRef = doc(db, 'users', userId);
-            await updateDoc(userRef, { telegramVerified: true });
-            showToast('Telegram подтвержден', 'success');
-            loadAdminPanel();
-        }
-
-        async function deleteQuestion(questionId) {
-            await deleteDoc(doc(db, 'questions', questionId));
-            showToast('Вопрос удален', 'success');
-            loadAdminPanel();
-        }
-
-        async function getAllQuestionsAdmin() {
-            const questionsRef = collection(db, 'questions');
-            const snapshot = await getDocs(query(questionsRef, orderBy('createdAt', 'desc')));
-            const questions = await Promise.all(snapshot.docs.map(async (docSnap) => {
-                const data = docSnap.data();
-                const fromUser = await getUserData(data.fromUserId);
-                const toUser = await getUserData(data.toUserId);
-                return {
-                    id: docSnap.id,
-                    ...data,
-                    fromName: fromUser ? `${fromUser.firstName} ${fromUser.lastName} (${fromUser.email})` : 'Неизвестный',
-                    toName: toUser ? `${toUser.firstName} ${toUser.lastName} (${toUser.email})` : 'Неизвестный'
-                };
-            }));
-            return questions;
-        }
-
-        // Рендер экрана авторизации
-        function renderAuthScreen() {
-            const appDiv = document.getElementById('app');
-            appDiv.innerHTML = `
-                <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
-                    <div class="auth-container">
-                        <div class="logo-large">HATERS ANON</div>
-                        <div class="tabs-auth">
-                            <div class="tab-auth active" data-auth-tab="login">Вход</div>
-                            <div class="tab-auth" data-auth-tab="register">Регистрация</div>
-                        </div>
-                        
-                        <!-- Форма входа -->
-                        <div id="loginForm" class="auth-form active">
-                            <div class="form-group">
-                                <label>Email</label>
-                                <input type="email" id="loginEmail" placeholder="your@email.com">
-                            </div>
-                            <div class="form-group">
-                                <label>Пароль</label>
-                                <input type="password" id="loginPassword" placeholder="••••••••">
-                            </div>
-                            <button class="btn btn-primary" id="loginBtn" style="width: 100%;">Войти</button>
-                        </div>
-                        
-                        <!-- Форма регистрации -->
-                        <div id="registerForm" class="auth-form">
-                            <div class="form-group">
-                                <label>Email</label>
-                                <input type="email" id="regEmail" placeholder="your@email.com">
-                            </div>
-                            <div class="form-group">
-                                <label>Пароль</label>
-                                <input type="password" id="regPassword" placeholder="минимум 6 символов">
-                            </div>
-                            <div class="form-group">
-                                <label>Имя</label>
-                                <input type="text" id="regFirstName" placeholder="Ваше имя">
-                            </div>
-                            <div class="form-group">
-                                <label>Фамилия</label>
-                                <input type="text" id="regLastName" placeholder="Ваша фамилия">
-                            </div>
-                            <div class="form-group">
-                                <label>Telegram Nickname (без @)</label>
-                                <input type="text" id="regTelegram" placeholder="username">
-                                <small style="color: rgba(255,255,255,0.5);">Администратор подтвердит ваш Telegram вручную</small>
-                            </div>
-                            <button class="btn btn-primary" id="registerBtn" style="width: 100%;">Зарегистрироваться</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // Переключение табов
-            document.querySelectorAll('.tab-auth').forEach(tab => {
-                tab.onclick = () => {
-                    document.querySelectorAll('.tab-auth').forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    const formType = tab.dataset.authTab;
-                    document.getElementById('loginForm').classList.toggle('active', formType === 'login');
-                    document.getElementById('registerForm').classList.toggle('active', formType === 'register');
-                };
-            });
-            
-            // Вход
-            document.getElementById('loginBtn').onclick = async () => {
-                const email = document.getElementById('loginEmail').value;
-                const password = document.getElementById('loginPassword').value;
-                if (email && password) {
-                    await loginUser(email, password);
-                } else {
-                    showToast('Заполните все поля', 'error');
-                }
-            };
-            
-            // Регистрация
-            document.getElementById('registerBtn').onclick = async () => {
-                const email = document.getElementById('regEmail').value;
-                const password = document.getElementById('regPassword').value;
-                const firstName = document.getElementById('regFirstName').value;
-                const lastName = document.getElementById('regLastName').value;
-                const telegram = document.getElementById('regTelegram').value;
-                
-                if (!email || !password || !firstName || !lastName || !telegram) {
-                    showToast('Заполните все поля', 'error');
-                    return;
-                }
-                
-                if (password.length < 6) {
-                    showToast('Пароль должен быть минимум 6 символов', 'error');
-                    return;
-                }
-                
-                await registerUser(email, password, firstName, lastName, telegram);
-            };
-        }
-        
-        // Рендер главного экрана
-        let currentTab = 'ask';
-        let currentSearchTerm = '';
-        
-        function renderMainScreen() {
-            const appDiv = document.getElementById('app');
-            
-            if (!currentUserData?.telegramVerified) {
-                appDiv.innerHTML = `
-                    <div class="header">
-                        <div class="header-content">
-                            <div class="logo">HATERS ANON ⚡</div>
-                            <button class="btn btn-secondary" id="logoutBtn">Выйти</button>
-                        </div>
-                    </div>
-                    <div class="container">
-                        <div class="card" style="text-align: center;">
-                            <h2>⏳ Ожидание подтверждения</h2>
-                            <p>Ваш Telegram аккаунт еще не подтвержден администратором.</p>
-                            <p>Пожалуйста, подождите или свяжитесь с администратором: <strong>sad.spotty@gmail.com</strong></p>
-                            ${!currentUserData?.emailVerified ? '<p style="color: #ffc107;">⚠️ Также подтвердите вашу почту (письмо отправлено)</p>' : ''}
-                        </div>
-                    </div>
-                `;
-                document.getElementById('logoutBtn').onclick = logoutUser;
-                return;
-            }
-            
-            if (currentUser?.email === 'sad.spotty@gmail.com') {
-                loadAdminPanel();
-                return;
-            }
-            
-            appDiv.innerHTML = `
-                <div class="header">
-                    <div class="header-content">
-                        <div class="logo">HATERS ANON ⚡</div>
-                        <div class="profile-info">
-                            <div class="profile-avatar">${currentUserData?.firstName?.charAt(0) || 'U'}</div>
-                            <span>${currentUserData?.firstName} ${currentUserData?.lastName}</span>
-                            <button class="btn btn-secondary" id="logoutBtn">Выйти</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="container">
-                    <div class="tabs">
-                        <div class="tab ${currentTab === 'ask' ? 'active' : ''}" data-tab="ask">✍️ Задать вопрос</div>
-                        <div class="tab ${currentTab === 'received' ? 'active' : ''}" data-tab="received">📥 Мои вопросы</div>
-                        <div class="tab ${currentTab === 'sent' ? 'active' : ''}" data-tab="sent">📤 Отправленные</div>
-                    </div>
-                    <div id="tabContent"></div>
-                </div>
-            `;
-            
-            document.getElementById('logoutBtn').onclick = logoutUser;
-            
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.onclick = () => {
-                    currentTab = tab.dataset.tab;
-                    renderMainScreen();
-                };
-            });
-            
-            const tabContent = document.getElementById('tabContent');
-            
-            if (currentTab === 'ask') {
-                renderAskTab(tabContent);
-            } else if (currentTab === 'received') {
-                renderReceivedTab(tabContent);
-            } else if (currentTab === 'sent') {
-                renderSentTab(tabContent);
-            }
-        }
-        
-        async function renderAskTab(container) {
-            container.innerHTML = `
-                <div class="search-bar">
-                    <input type="text" id="searchInput" placeholder="🔍 Поиск по имени или фамилии..." value="${currentSearchTerm}">
-                </div>
-                <div id="usersList" class="users-grid"></div>
-            `;
-            
-            const searchInput = document.getElementById('searchInput');
-            searchInput.oninput = async (e) => {
-                currentSearchTerm = e.target.value;
-                await loadUsersList();
-            };
-            
-            await loadUsersList();
-            
-            async function loadUsersList() {
-                const users = await searchUsers(currentSearchTerm);
-                const usersList = document.getElementById('usersList');
-                
-                if (users.length === 0) {
-                    usersList.innerHTML = '<div class="card">Пользователи не найдены</div>';
-                    return;
-                }
-                
-                usersList.innerHTML = users.map(user => `
-                    <div class="user-card" data-userid="${user.id}" data-username="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}">
-                        <div class="user-name">${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</div>
-                        <button class="btn btn-primary ask-btn" style="margin-top: 10px;">Задать вопрос</button>
-                    </div>
-                `).join('');
-                
-                document.querySelectorAll('.ask-btn').forEach(btn => {
-                    btn.onclick = (e) => {
-                        const card = e.target.closest('.user-card');
-                        const userId = card.dataset.userid;
-                        const userName = card.dataset.username;
-                        openQuestionModal(userId, userName);
-                    };
-                });
-            }
-        }
-        
-        async function renderReceivedTab(container) {
-            container.innerHTML = '<div class="loading">Загрузка вопросов...</div>';
-            const questions = await getUserQuestions(currentUser.uid, 'received');
-            
-            if (questions.length === 0) {
-                container.innerHTML = '<div class="card">Вам еще не задавали вопросы</div>';
-                return;
-            }
-            
-            container.innerHTML = questions.map(q => `
-                <div class="question-item">
-                    <div class="question-text">${escapeHtml(q.text)}</div>
-                    <div class="question-meta">
-                        <span>От: ${escapeHtml(q.fromUserName)}</span>
-                        <span>${new Date(q.createdAt).toLocaleString()}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-        
-        async function renderSentTab(container) {
-            container.innerHTML = '<div class="loading">Загрузка вопросов...</div>';
-            const questions = await getUserQuestions(currentUser.uid, 'sent');
-            
-            if (questions.length === 0) {
-                container.innerHTML = '<div class="card">Вы еще не задавали вопросов</div>';
-                return;
-            }
-            
-            container.innerHTML = questions.map(q => `
-                <div class="question-item">
-                    <div class="question-text">${escapeHtml(q.text)}</div>
-                    <div class="question-meta">
-                        <span>Кому: ${escapeHtml(q.toUserName)}</span>
-                        <span>${new Date(q.createdAt).toLocaleString()}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-        
-        async function loadAdminPanel() {
-            const appDiv = document.getElementById('app');
-            const unverifiedUsers = await getUnverifiedTelegramUsers();
-            const allQuestions = await getAllQuestionsAdmin();
-            
-            appDiv.innerHTML = `
-                <div class="header">
-                    <div class="header-content">
-                        <div class="logo">HATERS ANON ⚡ АДМИН</div>
-                        <button class="btn btn-secondary" id="logoutBtn">Выйти</button>
-                    </div>
-                </div>
-                <div class="container">
-                    <h2>👑 Админ-панель</h2>
-                    <div class="admin-panel">
-                        <h3>📱 Подтверждение Telegram (${unverifiedUsers.length})</h3>
-                        <div class="admin-table">
-                            <table>
-                                <thead>
-                                    <tr><th>Имя Фамилия</th><th>Email</th><th>Telegram</th><th>Почта подтверждена</th><th>Действие</th></tr>
-                                </thead>
-                                <tbody>
-                                    ${unverifiedUsers.map(user => `
-                                        <tr>
-                                            <td>${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</td>
-                                            <td>${escapeHtml(user.email)}</td>
-                                            <td>@${escapeHtml(user.telegramNickname)}</td>
-                                            <td>${user.emailVerified ? '✅ Да' : '❌ Нет'}</td>
-                                            <td><button class="btn btn-primary verify-telegram" data-id="${user.id}">Подтвердить TG</button></td>
-                                        </tr>
-                                    `).join('')}
-                                    ${unverifiedUsers.length === 0 ? '<tr><td colspan="5">Нет пользователей на подтверждение</td></tr>' : ''}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <div class="admin-panel">
-                        <h3>❓ Все вопросы (${allQuestions.length})</h3>
-                        <div class="admin-table">
-                            <table>
-                                <thead>
-                                    <tr><th>От кого</th><th>Кому</th><th>Вопрос</th><th>Дата</th><th>Действие</th></tr>
-                                </thead>
-                                <tbody>
-                                    ${allQuestions.map(q => `
-                                        <tr>
-                                            <td>${escapeHtml(q.fromName)}</td>
-                                            <td>${escapeHtml(q.toName)}</td>
-                                            <td>${escapeHtml(q.text.substring(0, 100))}</td>
-                                            <td>${new Date(q.createdAt).toLocaleString()}</td>
-                                            <td><button class="btn btn-danger delete-question" data-id="${q.id}">Удалить</button></td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('logoutBtn').onclick = logoutUser;
-            
-            document.querySelectorAll('.verify-telegram').forEach(btn => {
-                btn.onclick = () => verifyTelegram(btn.dataset.id);
-            });
-            
-            document.querySelectorAll('.delete-question').forEach(btn => {
-                btn.onclick = () => deleteQuestion(btn.dataset.id);
-            });
-        }
-        
-        function openQuestionModal(userId, userName) {
-            selectedUser = { id: userId, name: userName };
-            const modal = document.getElementById('questionModal');
-            if (modal) {
-                document.getElementById('modalTitle').innerHTML = `Задать вопрос ${userName}`;
-                document.getElementById('questionText').value = '';
-                modal.classList.add('active');
-            }
-        }
-        
-        function closeModal() {
-            const modal = document.getElementById('questionModal');
-            if (modal) modal.classList.remove('active');
-            selectedUser = null;
-        }
-        
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-        
-        // Слушатель авторизации
-        onAuthStateChanged(auth, async (user) => {
-            currentUser = user;
-            
-            if (user) {
-                const userData = await getUserData(user.uid);
-                currentUserData = userData;
-                
-                if (!userData) {
-                    // Пользователь есть в Auth, но нет в Firestore - выходим
-                    await logoutUser();
-                    return;
-                }
-                
-                // Проверяем верификацию почты
-                if (user.email !== 'sad.spotty@gmail.com') {
-                    await checkAndUpdateEmailVerification(user);
-                    const updatedData = await getUserData(user.uid);
-                    currentUserData = updatedData;
-                }
-                
-                renderMainScreen();
-            } else {
-                currentUserData = null;
-                renderAuthScreen();
-            }
-        });
-        
-        // Добавляем модальное окно в body
-        const modalHtml = `
-            <div id="questionModal" class="modal">
-                <div class="modal-content">
-                    <h2 id="modalTitle">Задать вопрос</h2>
-                    <div class="form-group">
-                        <label>Ваш вопрос</label>
-                        <textarea id="questionText" rows="4" placeholder="Введите ваш анонимный вопрос..."></textarea>
-                    </div>
-                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                        <button class="btn btn-secondary" onclick="window.closeModalFromGlobal()">Отмена</button>
-                        <button class="btn btn-primary" id="sendQuestionBtn">Отправить</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-        
-        window.closeModalFromGlobal = closeModal;
-        
-        document.addEventListener('click', (e) => {
-            if (e.target.id === 'sendQuestionBtn' && selectedUser) {
-                const text = document.getElementById('questionText')?.value;
-                if (text) sendQuestion(selectedUser.id, text);
-            }
-        });
-    </script>
-    
     <style>
         * {
             margin: 0;
@@ -987,9 +369,629 @@
             display: block;
             margin-top: 5px;
         }
+
+        .warning-box {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid #ffc107;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .resend-btn {
+            margin-top: 10px;
+            background: none;
+            border: 1px solid #ffc107;
+            color: #ffc107;
+        }
     </style>
 </head>
 <body>
     <div id="app"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, getDoc, setDoc, doc, updateDoc, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCFnjivHF82OH0e5o5mnZp1_1UGkO63_QE",
+            authDomain: "hatersanon.firebaseapp.com",
+            projectId: "hatersanon",
+            storageBucket: "hatersanon.firebasestorage.app",
+            messagingSenderId: "759284962705",
+            appId: "1:759284962705:web:e3fe811230dd9bdee63630",
+            measurementId: "G-XPEHPWXQH0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let currentUserData = null;
+        let selectedUser = null;
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        async function registerUser(email, password, firstName, lastName, telegramNickname) {
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                await sendEmailVerification(user);
+                
+                const userRef = doc(db, 'users', user.uid);
+                const userData = {
+                    email: email,
+                    firstName: firstName,
+                    lastName: lastName,
+                    telegramNickname: telegramNickname,
+                    telegramVerified: false,
+                    emailVerified: false,
+                    createdAt: new Date().toISOString()
+                };
+                await setDoc(userRef, userData);
+                
+                showToast('Регистрация успешна! Подтвердите почту (письмо отправлено)', 'success');
+                return true;
+            } catch (error) {
+                showToast(error.message, 'error');
+                return false;
+            }
+        }
+
+        async function loginUser(email, password) {
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                await user.reload();
+                
+                if (!user.emailVerified) {
+                    showToast('Подтвердите почту! Письмо отправлено на ' + email, 'error');
+                    await signOut(auth);
+                    return false;
+                }
+                
+                showToast('Вход выполнен!', 'success');
+                return true;
+            } catch (error) {
+                showToast(error.message, 'error');
+                return false;
+            }
+        }
+
+        async function resendVerificationEmail() {
+            if (auth.currentUser) {
+                await sendEmailVerification(auth.currentUser);
+                showToast('Письмо с подтверждением отправлено повторно!', 'success');
+            }
+        }
+
+        async function logoutUser() {
+            await signOut(auth);
+            currentUser = null;
+            currentUserData = null;
+            showToast('Вы вышли', 'success');
+            renderAuthScreen();
+        }
+
+        async function getUserData(userId) {
+            const userRef = doc(db, 'users', userId);
+            const userSnap = await getDoc(userRef);
+            return userSnap.exists() ? userSnap.data() : null;
+        }
+
+        async function getAllUsers() {
+            const usersRef = collection(db, 'users');
+            const snapshot = await getDocs(usersRef);
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        }
+
+        async function searchUsers(searchTerm) {
+            const users = await getAllUsers();
+            if (!searchTerm) return users.filter(u => u.id !== currentUser?.uid && u.telegramVerified && u.emailVerified);
+            const term = searchTerm.toLowerCase();
+            return users.filter(user => 
+                (user.firstName?.toLowerCase().includes(term) || user.lastName?.toLowerCase().includes(term)) &&
+                user.id !== currentUser?.uid &&
+                user.telegramVerified &&
+                user.emailVerified
+            );
+        }
+
+        async function sendQuestion(toUserId, text) {
+            if (!text.trim()) {
+                showToast('Введите вопрос', 'error');
+                return;
+            }
+            try {
+                await addDoc(collection(db, 'questions'), {
+                    fromUserId: currentUser.uid,
+                    toUserId: toUserId,
+                    text: text,
+                    createdAt: new Date().toISOString(),
+                    isAnonymous: true
+                });
+                showToast('Вопрос отправлен анонимно!', 'success');
+                closeModal();
+            } catch (error) {
+                showToast('Ошибка: ' + error.message, 'error');
+            }
+        }
+
+        async function getUserQuestions(userId, type = 'received') {
+            const questionsRef = collection(db, 'questions');
+            let q;
+            if (type === 'received') {
+                q = query(questionsRef, where('toUserId', '==', userId), orderBy('createdAt', 'desc'));
+            } else {
+                q = query(questionsRef, where('fromUserId', '==', userId), orderBy('createdAt', 'desc'));
+            }
+            const snapshot = await getDocs(q);
+            const questions = await Promise.all(snapshot.docs.map(async (docSnap) => {
+                const data = docSnap.data();
+                if (type === 'received') {
+                    const fromUser = await getUserData(data.fromUserId);
+                    return { id: docSnap.id, ...data, fromUserName: fromUser ? `${fromUser.firstName} ${fromUser.lastName}` : 'Удалён' };
+                } else {
+                    const toUser = await getUserData(data.toUserId);
+                    return { id: docSnap.id, ...data, toUserName: toUser ? `${toUser.firstName} ${toUser.lastName}` : 'Удалён' };
+                }
+            }));
+            return questions;
+        }
+
+        async function getUnverifiedTelegramUsers() {
+            const usersRef = collection(db, 'users');
+            const q = query(usersRef, where('telegramVerified', '==', false));
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        }
+
+        async function verifyTelegram(userId) {
+            const userRef = doc(db, 'users', userId);
+            await updateDoc(userRef, { telegramVerified: true });
+            showToast('Telegram подтверждён', 'success');
+            loadAdminPanel();
+        }
+
+        async function deleteQuestion(questionId) {
+            await deleteDoc(doc(db, 'questions', questionId));
+            showToast('Вопрос удалён', 'success');
+            loadAdminPanel();
+        }
+
+        async function getAllQuestionsAdmin() {
+            const questionsRef = collection(db, 'questions');
+            const snapshot = await getDocs(query(questionsRef, orderBy('createdAt', 'desc')));
+            const questions = await Promise.all(snapshot.docs.map(async (docSnap) => {
+                const data = docSnap.data();
+                const fromUser = await getUserData(data.fromUserId);
+                const toUser = await getUserData(data.toUserId);
+                return {
+                    id: docSnap.id,
+                    ...data,
+                    fromName: fromUser ? `${fromUser.firstName} ${fromUser.lastName} (${fromUser.email})` : 'Неизвестный',
+                    toName: toUser ? `${toUser.firstName} ${toUser.lastName} (${toUser.email})` : 'Неизвестный'
+                };
+            }));
+            return questions;
+        }
+
+        function renderAuthScreen() {
+            const appDiv = document.getElementById('app');
+            appDiv.innerHTML = `
+                <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
+                    <div class="auth-container">
+                        <div class="logo-large">HATERS ANON</div>
+                        <div class="tabs-auth">
+                            <div class="tab-auth active" data-auth-tab="login">Вход</div>
+                            <div class="tab-auth" data-auth-tab="register">Регистрация</div>
+                        </div>
+                        
+                        <div id="loginForm" class="auth-form active">
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="loginEmail" placeholder="your@email.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Пароль</label>
+                                <input type="password" id="loginPassword" placeholder="••••••••">
+                            </div>
+                            <button class="btn btn-primary" id="loginBtn" style="width: 100%;">Войти</button>
+                            <button class="btn btn-secondary" id="forgotPasswordBtn" style="width: 100%; margin-top: 10px;">Забыли пароль?</button>
+                        </div>
+                        
+                        <div id="registerForm" class="auth-form">
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="regEmail" placeholder="your@email.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Пароль</label>
+                                <input type="password" id="regPassword" placeholder="минимум 6 символов">
+                            </div>
+                            <div class="form-group">
+                                <label>Имя</label>
+                                <input type="text" id="regFirstName" placeholder="Ваше имя">
+                            </div>
+                            <div class="form-group">
+                                <label>Фамилия</label>
+                                <input type="text" id="regLastName" placeholder="Ваша фамилия">
+                            </div>
+                            <div class="form-group">
+                                <label>Telegram Nickname (без @)</label>
+                                <input type="text" id="regTelegram" placeholder="username">
+                                <small>Администратор подтвердит ваш Telegram вручную</small>
+                            </div>
+                            <button class="btn btn-primary" id="registerBtn" style="width: 100%;">Зарегистрироваться</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.querySelectorAll('.tab-auth').forEach(tab => {
+                tab.onclick = () => {
+                    document.querySelectorAll('.tab-auth').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    const formType = tab.dataset.authTab;
+                    document.getElementById('loginForm').classList.toggle('active', formType === 'login');
+                    document.getElementById('registerForm').classList.toggle('active', formType === 'register');
+                };
+            });
+            
+            document.getElementById('loginBtn').onclick = async () => {
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                if (email && password) await loginUser(email, password);
+                else showToast('Заполните все поля', 'error');
+            };
+            
+            document.getElementById('forgotPasswordBtn').onclick = async () => {
+                const email = document.getElementById('loginEmail').value;
+                if (!email) {
+                    showToast('Введите email для восстановления', 'error');
+                    return;
+                }
+                try {
+                    await sendPasswordResetEmail(auth, email);
+                    showToast('Ссылка для сброса пароля отправлена на почту', 'success');
+                } catch (error) {
+                    showToast(error.message, 'error');
+                }
+            };
+            
+            document.getElementById('registerBtn').onclick = async () => {
+                const email = document.getElementById('regEmail').value;
+                const password = document.getElementById('regPassword').value;
+                const firstName = document.getElementById('regFirstName').value;
+                const lastName = document.getElementById('regLastName').value;
+                const telegram = document.getElementById('regTelegram').value;
+                
+                if (!email || !password || !firstName || !lastName || !telegram) {
+                    showToast('Заполните все поля', 'error');
+                    return;
+                }
+                if (password.length < 6) {
+                    showToast('Пароль минимум 6 символов', 'error');
+                    return;
+                }
+                await registerUser(email, password, firstName, lastName, telegram);
+            };
+        }
+
+        let currentTab = 'ask';
+        let currentSearchTerm = '';
+
+        function renderMainScreen() {
+            const appDiv = document.getElementById('app');
+            
+            if (!currentUserData?.emailVerified) {
+                appDiv.innerHTML = `
+                    <div class="header">
+                        <div class="header-content">
+                            <div class="logo">HATERS ANON ⚡</div>
+                            <button class="btn btn-secondary" id="logoutBtn">Выйти</button>
+                        </div>
+                    </div>
+                    <div class="container">
+                        <div class="warning-box">
+                            <h3>📧 Подтвердите email</h3>
+                            <p>На почту <strong>${currentUser?.email}</strong> отправлено письмо с подтверждением.</p>
+                            <p>Перейдите по ссылке в письме, чтобы активировать аккаунт.</p>
+                            <button class="btn btn-warning resend-btn" id="resendEmailBtn">Отправить письмо повторно</button>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('logoutBtn').onclick = logoutUser;
+                document.getElementById('resendEmailBtn')?.addEventListener('click', resendVerificationEmail);
+                return;
+            }
+            
+            if (!currentUserData?.telegramVerified) {
+                appDiv.innerHTML = `
+                    <div class="header">
+                        <div class="header-content">
+                            <div class="logo">HATERS ANON ⚡</div>
+                            <button class="btn btn-secondary" id="logoutBtn">Выйти</button>
+                        </div>
+                    </div>
+                    <div class="container">
+                        <div class="card" style="text-align: center;">
+                            <h2>⏳ Ожидание подтверждения Telegram</h2>
+                            <p>Ваш Telegram аккаунт (@${currentUserData?.telegramNickname}) ещё не подтверждён администратором.</p>
+                            <p>Свяжитесь с администратором: <strong>sad.spotty@gmail.com</strong></p>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('logoutBtn').onclick = logoutUser;
+                return;
+            }
+            
+            if (currentUser?.email === 'sad.spotty@gmail.com') {
+                loadAdminPanel();
+                return;
+            }
+            
+            appDiv.innerHTML = `
+                <div class="header">
+                    <div class="header-content">
+                        <div class="logo">HATERS ANON ⚡</div>
+                        <div class="profile-info">
+                            <div class="profile-avatar">${currentUserData?.firstName?.charAt(0) || 'U'}</div>
+                            <span>${currentUserData?.firstName} ${currentUserData?.lastName}</span>
+                            <button class="btn btn-secondary" id="logoutBtn">Выйти</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="container">
+                    <div class="tabs">
+                        <div class="tab ${currentTab === 'ask' ? 'active' : ''}" data-tab="ask">✍️ Задать вопрос</div>
+                        <div class="tab ${currentTab === 'received' ? 'active' : ''}" data-tab="received">📥 Мои вопросы</div>
+                        <div class="tab ${currentTab === 'sent' ? 'active' : ''}" data-tab="sent">📤 Отправленные</div>
+                    </div>
+                    <div id="tabContent"></div>
+                </div>
+            `;
+            
+            document.getElementById('logoutBtn').onclick = logoutUser;
+            
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.onclick = () => {
+                    currentTab = tab.dataset.tab;
+                    renderMainScreen();
+                };
+            });
+            
+            const tabContent = document.getElementById('tabContent');
+            if (currentTab === 'ask') renderAskTab(tabContent);
+            else if (currentTab === 'received') renderReceivedTab(tabContent);
+            else if (currentTab === 'sent') renderSentTab(tabContent);
+        }
+        
+        async function renderAskTab(container) {
+            container.innerHTML = `
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="🔍 Поиск по имени или фамилии..." value="${currentSearchTerm}">
+                </div>
+                <div id="usersList" class="users-grid"></div>
+            `;
+            
+            const searchInput = document.getElementById('searchInput');
+            searchInput.oninput = async (e) => {
+                currentSearchTerm = e.target.value;
+                await loadUsersList();
+            };
+            await loadUsersList();
+            
+            async function loadUsersList() {
+                const users = await searchUsers(currentSearchTerm);
+                const usersList = document.getElementById('usersList');
+                if (users.length === 0) {
+                    usersList.innerHTML = '<div class="card">Пользователи не найдены</div>';
+                    return;
+                }
+                usersList.innerHTML = users.map(user => `
+                    <div class="user-card" data-userid="${user.id}" data-username="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}">
+                        <div class="user-name">${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</div>
+                        <button class="btn btn-primary ask-btn" style="margin-top: 10px;">Задать вопрос</button>
+                    </div>
+                `).join('');
+                
+                document.querySelectorAll('.ask-btn').forEach(btn => {
+                    btn.onclick = (e) => {
+                        const card = e.target.closest('.user-card');
+                        openQuestionModal(card.dataset.userid, card.dataset.username);
+                    };
+                });
+            }
+        }
+        
+        async function renderReceivedTab(container) {
+            container.innerHTML = '<div class="loading">Загрузка...</div>';
+            const questions = await getUserQuestions(currentUser.uid, 'received');
+            if (questions.length === 0) {
+                container.innerHTML = '<div class="card">Вам ещё не задавали вопросов</div>';
+                return;
+            }
+            container.innerHTML = questions.map(q => `
+                <div class="question-item">
+                    <div class="question-text">${escapeHtml(q.text)}</div>
+                    <div class="question-meta">
+                        <span>От: ${escapeHtml(q.fromUserName)}</span>
+                        <span>${new Date(q.createdAt).toLocaleString()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function renderSentTab(container) {
+            container.innerHTML = '<div class="loading">Загрузка...</div>';
+            const questions = await getUserQuestions(currentUser.uid, 'sent');
+            if (questions.length === 0) {
+                container.innerHTML = '<div class="card">Вы ещё не задавали вопросов</div>';
+                return;
+            }
+            container.innerHTML = questions.map(q => `
+                <div class="question-item">
+                    <div class="question-text">${escapeHtml(q.text)}</div>
+                    <div class="question-meta">
+                        <span>Кому: ${escapeHtml(q.toUserName)}</span>
+                        <span>${new Date(q.createdAt).toLocaleString()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function loadAdminPanel() {
+            const appDiv = document.getElementById('app');
+            const unverifiedUsers = await getUnverifiedTelegramUsers();
+            const allQuestions = await getAllQuestionsAdmin();
+            
+            appDiv.innerHTML = `
+                <div class="header">
+                    <div class="header-content">
+                        <div class="logo">HATERS ANON ⚡ АДМИН</div>
+                        <button class="btn btn-secondary" id="logoutBtn">Выйти</button>
+                    </div>
+                </div>
+                <div class="container">
+                    <h2>👑 Админ-панель</h2>
+                    <div class="admin-panel">
+                        <h3>📱 Подтверждение Telegram (${unverifiedUsers.length})</h3>
+                        <div class="admin-table">
+                            <table>
+                                <thead>
+                                    <tr><th>Имя Фамилия</th><th>Email</th><th>Telegram</th><th>Почта</th><th>Действие</th></tr>
+                                </thead>
+                                <tbody>
+                                    ${unverifiedUsers.map(user => `
+                                        <tr>
+                                            <td>${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</td>
+                                            <td>${escapeHtml(user.email)}</td>
+                                            <td>@${escapeHtml(user.telegramNickname)}</td>
+                                            <td>${user.emailVerified ? '✅' : '❌'}</td>
+                                            <td><button class="btn btn-primary verify-telegram" data-id="${user.id}">Подтвердить</button></td>
+                                        </tr>
+                                    `).join('')}
+                                    ${unverifiedUsers.length === 0 ? '<tr><td colspan="5">✅ Все пользователи подтверждены</td></tr>' : ''}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="admin-panel">
+                        <h3>❓ Все вопросы (${allQuestions.length})</h3>
+                        <div class="admin-table">
+                            <table>
+                                <thead><tr><th>От кого</th><th>Кому</th><th>Вопрос</th><th>Дата</th><th>Действие</th></tr></thead>
+                                <tbody>
+                                    ${allQuestions.map(q => `
+                                        <tr>
+                                            <td>${escapeHtml(q.fromName)}</td>
+                                            <td>${escapeHtml(q.toName)}</td>
+                                            <td>${escapeHtml(q.text.substring(0, 100))}</td>
+                                            <td>${new Date(q.createdAt).toLocaleString()}</td>
+                                            <td><button class="btn btn-danger delete-question" data-id="${q.id}">Удалить</button></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('logoutBtn').onclick = logoutUser;
+            document.querySelectorAll('.verify-telegram').forEach(btn => {
+                btn.onclick = () => verifyTelegram(btn.dataset.id);
+            });
+            document.querySelectorAll('.delete-question').forEach(btn => {
+                btn.onclick = () => deleteQuestion(btn.dataset.id);
+            });
+        }
+        
+        function openQuestionModal(userId, userName) {
+            selectedUser = { id: userId, name: userName };
+            const modal = document.getElementById('questionModal');
+            if (modal) {
+                document.getElementById('modalTitle').innerHTML = `Задать вопрос ${userName}`;
+                document.getElementById('questionText').value = '';
+                modal.classList.add('active');
+            }
+        }
+        
+        function closeModal() {
+            const modal = document.getElementById('questionModal');
+            if (modal) modal.classList.remove('active');
+            selectedUser = null;
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
+            if (user) {
+                await user.reload();
+                const userData = await getUserData(user.uid);
+                currentUserData = userData;
+                
+                if (!userData) {
+                    await logoutUser();
+                    return;
+                }
+                
+                if (user.emailVerified && !userData.emailVerified) {
+                    const userRef = doc(db, 'users', user.uid);
+                    await updateDoc(userRef, { emailVerified: true });
+                    currentUserData.emailVerified = true;
+                }
+                
+                renderMainScreen();
+            } else {
+                currentUserData = null;
+                renderAuthScreen();
+            }
+        });
+        
+        const modalHtml = `
+            <div id="questionModal" class="modal">
+                <div class="modal-content">
+                    <h2 id="modalTitle">Задать вопрос</h2>
+                    <div class="form-group">
+                        <label>Ваш вопрос</label>
+                        <textarea id="questionText" rows="4" placeholder="Введите ваш анонимный вопрос..."></textarea>
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="btn btn-secondary" onclick="window.closeModalFromGlobal()">Отмена</button>
+                        <button class="btn btn-primary" id="sendQuestionBtn">Отправить</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        window.closeModalFromGlobal = closeModal;
+        
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'sendQuestionBtn' && selectedUser) {
+                const text = document.getElementById('questionText')?.value;
+                if (text) sendQuestion(selectedUser.id, text);
+            }
+        });
+    </script>
 </body>
 </html>
