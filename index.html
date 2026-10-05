@@ -2,515 +2,346 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Для Арины 💕</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Для тебя 💌</title>
 <style>
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-
-  html, body {
-    min-height: 100%;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Georgia', serif;
-    color: #5a2c44;
-    overflow-x: hidden;
-  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    background: linear-gradient(160deg, #ffe0ec 0%, #ffd0e2 40%, #ffc0d8 100%);
-    padding: 24px 16px 60px;
-    position: relative;
     min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 50%, #e1bee7 100%);
+    font-family: 'Georgia', serif;
+    overflow: hidden;
+    padding: 20px;
   }
 
-  .bg-decor {
+  /* Плавающие сердечки на фоне */
+  .heart-bg {
     position: fixed;
-    inset: 0;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 20px;
+    animation: float 8s infinite ease-in-out;
     pointer-events: none;
-    overflow: hidden;
+    user-select: none;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.4; }
+    50% { transform: translateY(-30px) rotate(15deg); opacity: 0.8; }
+  }
+
+  /* Контейнер конверта */
+  .envelope-wrapper {
+    position: relative;
+    width: 360px;
+    height: 250px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    filter: drop-shadow(0 15px 35px rgba(180, 100, 140, 0.35));
+  }
+  .envelope-wrapper:hover { transform: translateY(-5px); }
+  .envelope-wrapper.open { cursor: default; }
+
+  /* Основа конверта */
+  .envelope {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(160deg, #ffffff 0%, #fdf0f5 100%);
+    border-radius: 8px;
+  }
+
+  /* Клапан конверта */
+  .flap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 0;
+    border-left: 180px solid transparent;
+    border-right: 180px solid transparent;
+    border-top: 140px solid #f8bbd0;
+    z-index: 3;
+    transform-origin: top;
+    transition: transform 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    filter: drop-shadow(0 3px 4px rgba(0,0,0,0.08));
+  }
+  .envelope-wrapper.open .flap {
+    transform: rotateX(180deg);
     z-index: 0;
   }
 
-  .float-item {
+  /* Боковые и нижняя части конверта */
+  .pocket {
     position: absolute;
-    font-size: 28px;
-    opacity: 0.55;
-    animation: floatUp linear infinite;
-    will-change: transform;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .pocket::before,
+  .pocket::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    width: 0;
+    height: 0;
+  }
+  .pocket::before {
+    left: 0;
+    border-bottom: 125px solid #f48fb1;
+    border-right: 180px solid transparent;
+  }
+  .pocket::after {
+    right: 0;
+    border-bottom: 125px solid #f48fb1;
+    border-left: 180px solid transparent;
+  }
+  .bottom-flap {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0;
+    border-left: 180px solid transparent;
+    border-right: 180px solid transparent;
+    border-bottom: 140px solid #ec6c94;
+    z-index: 2;
   }
 
-  @keyframes floatUp {
-    0%   { transform: translateY(110vh) rotate(0deg) scale(0.8); opacity: 0; }
-    10%  { opacity: 0.6; }
-    90%  { opacity: 0.6; }
-    100% { transform: translateY(-20vh) rotate(360deg) scale(1.1); opacity: 0; }
+  /* Печать-сердечко */
+  .seal {
+    position: absolute;
+    top: 105px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 36px;
+    z-index: 4;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    filter: drop-shadow(0 2px 4px rgba(200, 50, 100, 0.4));
+  }
+  .envelope-wrapper.open .seal {
+    opacity: 0;
+    transform: translateX(-50%) scale(0);
   }
 
-  .card {
-    position: relative;
-    z-index: 1;
-    max-width: 600px;
-    margin: 0 auto;
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: 28px;
-    padding: 32px 26px 28px;
-    box-shadow: 0 20px 60px rgba(255, 100, 150, 0.28),
-                0 4px 12px rgba(255, 100, 150, 0.15);
-    border: 2px solid rgba(255, 255, 255, 0.9);
-    animation: cardIn 0.8s ease both;
-  }
-
-  @keyframes cardIn {
-    from { opacity: 0; transform: translateY(24px) scale(0.97); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
-  }
-
-  .header { text-align: center; margin-bottom: 26px; }
-
-  .header h1 {
-    font-size: 27px;
-    font-weight: 700;
-    background: linear-gradient(135deg, #ff5c94, #ff2d7a);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 8px;
-    letter-spacing: 0.3px;
-  }
-
-  .header .subtitle {
-    color: #b07a90;
-    font-size: 14.5px;
+  /* Подсказка "нажми" */
+  .hint {
+    position: absolute;
+    bottom: -55px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #ad1457;
+    font-size: 15px;
     font-style: italic;
+    letter-spacing: 0.5px;
+    animation: pulse 2s infinite;
+    white-space: nowrap;
+    z-index: 5;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+  .envelope-wrapper.open .hint { opacity: 0; }
+
+  /* Листы писем */
+  .letter {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    width: 340px;
+    min-height: 320px;
+    background: #fffdf8;
+    border-radius: 6px;
+    padding: 32px 30px 70px;
+    z-index: 1;
+    opacity: 0;
+    pointer-events: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    transition: transform 0.8s cubic-bezier(0.34, 1.3, 0.64, 1), opacity 0.5s ease;
+    background-image: repeating-linear-gradient(
+      transparent, transparent 30px, #fce4ec 31px
+    );
+    background-position: 0 14px;
+    display: flex;
+    flex-direction: column;
+  }
+  .envelope-wrapper.open .letter {
+    transform: translateX(-50%) translateY(-270px);
+    opacity: 1;
+    z-index: 5;
+    pointer-events: auto;
   }
 
-  .header .heart-row {
-    font-size: 20px;
-    letter-spacing: 6px;
-    margin-top: 10px;
-    animation: heartPulse 2.4s ease-in-out infinite;
+  /* Страницы */
+  .page {
+    display: none;
+    animation: fadeIn 0.5s ease;
+    flex: 1;
+  }
+  .page.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateX(10px); }
+    to { opacity: 1; transform: translateX(0); }
   }
 
-  @keyframes heartPulse {
-    0%, 100% { transform: scale(1); opacity: 0.85; }
-    50%      { transform: scale(1.08); opacity: 1; }
+  .page p {
+    font-size: 15px;
+    line-height: 31px;
+    color: #4a4a4a;
+    margin-bottom: 14px;
   }
 
-  .progress-wrap {
-    margin-bottom: 24px;
+  /* Подпись */
+  .signature {
+    text-align: right;
+    font-style: italic;
+    color: #ad1457;
+    font-size: 17px;
+    margin-top: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Навигация со стрелками */
+  .nav {
+    position: absolute;
+    bottom: 18px;
+    left: 0;
+    right: 0;
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: center;
+    gap: 18px;
   }
-
-  .progress {
-    flex: 1;
-    height: 8px;
-    background: #ffe0ec;
-    border-radius: 99px;
-    overflow: hidden;
-    box-shadow: inset 0 1px 3px rgba(255, 100, 150, 0.15);
-  }
-
-  .progress-bar {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, #ff85b0, #ff2d7a);
-    border-radius: 99px;
-    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 0 10px rgba(255, 45, 122, 0.5);
-  }
-
-  .progress-text {
-    font-size: 13px;
-    color: #b07a90;
-    font-weight: 600;
-    min-width: 52px;
-    text-align: right;
-  }
-
-  .question { display: none; }
-
-  .question.active {
-    display: block;
-    animation: qIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  @keyframes qIn {
-    from { opacity: 0; transform: translateX(30px); }
-    to   { opacity: 1; transform: translateX(0); }
-  }
-
-  .question .q-emoji {
-    font-size: 40px;
-    text-align: center;
-    display: block;
-    margin-bottom: 12px;
-    animation: bounceIn 0.6s ease;
-  }
-
-  @keyframes bounceIn {
-    0%   { transform: scale(0); }
-    60%  { transform: scale(1.2); }
-    100% { transform: scale(1); }
-  }
-
-  .question h2 {
-    font-size: 19px;
-    font-weight: 600;
-    margin-bottom: 20px;
-    text-align: center;
-    color: #4a2c3a;
-    line-height: 1.45;
-  }
-
-  textarea {
-    width: 100%;
-    min-height: 120px;
-    padding: 16px 18px;
-    font-size: 16px;
-    font-family: inherit;
-    line-height: 1.5;
-    color: #4a2c3a;
-    background: #fff8fb;
-    border: 2px solid #ffd6e6;
-    border-radius: 18px;
-    outline: none;
-    resize: vertical;
-    transition: all 0.25s;
-    -webkit-appearance: none;
-  }
-
-  textarea:focus {
-    border-color: #ff6b9d;
-    background: #fff;
-    box-shadow: 0 0 0 4px rgba(255, 107, 157, 0.15);
-  }
-
-  textarea::placeholder {
-    color: #d4a8bd;
-    font-style: italic;
-  }
-
-  .char-count {
-    font-size: 12px;
-    color: #c99bb0;
-    text-align: right;
-    margin-top: 6px;
-    padding-right: 4px;
-  }
-
-  .btn {
-    width: 100%;
-    padding: 18px;
-    margin-top: 16px;
-    background: linear-gradient(135deg, #ff6b9d 0%, #ff2d7a 100%);
-    color: #fff;
-    border: none;
-    border-radius: 18px;
-    font-size: 17px;
-    font-weight: 700;
-    font-family: inherit;
-    cursor: pointer;
-    transition: transform 0.15s, box-shadow 0.25s;
-    box-shadow: 0 8px 20px rgba(255, 45, 122, 0.35);
-    letter-spacing: 0.3px;
-  }
-
-  .btn:active { transform: scale(0.97); }
-
-  .btn:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-    box-shadow: none;
-  }
-
-  .btn:hover:not(:disabled) {
-    box-shadow: 0 12px 26px rgba(255, 45, 122, 0.45);
-  }
-
-  .btn-back {
+  .nav button {
     background: none;
-    color: #b07a90;
-    box-shadow: none;
-    margin-top: 10px;
-    font-size: 15px;
-    font-weight: 600;
-    padding: 12px;
-    display: none;
+    border: none;
+    font-size: 26px;
+    color: #ec6c94;
+    cursor: pointer;
+    transition: transform 0.2s ease, color 0.2s ease;
+    padding: 4px 10px;
+    line-height: 1;
   }
-
-  .btn-back.show { display: block; }
-  .btn-back:hover { color: #ff2d7a; }
-
-  .final {
-    display: none;
+  .nav button:hover:not(:disabled) {
+    transform: scale(1.25);
+    color: #ad1457;
+  }
+  .nav button:disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
+  }
+  .counter {
+    font-size: 13px;
+    color: #ad1457;
+    font-style: italic;
+    letter-spacing: 0.5px;
+    min-width: 40px;
     text-align: center;
-    padding: 20px 0 10px;
   }
 
-  .final.show {
-    display: block;
-    animation: qIn 0.6s ease;
-  }
-
-  .final .big-heart {
-    font-size: 80px;
-    display: inline-block;
-    animation: heartBeat 1.2s ease-in-out infinite;
-  }
-
-  @keyframes heartBeat {
-    0%, 100% { transform: scale(1); }
-    15%      { transform: scale(1.25); }
-    30%      { transform: scale(1); }
-    45%      { transform: scale(1.15); }
-  }
-
-  .final h2 {
-    font-size: 24px;
-    color: #ff2d7a;
-    margin: 14px 0 10px;
-    font-weight: 700;
-  }
-
-  .final p {
-    color: #b07a90;
-    font-size: 15.5px;
-    line-height: 1.6;
-    max-width: 400px;
-    margin: 0 auto;
-  }
-
-  .final .hearts-rain {
-    margin-top: 18px;
-    font-size: 22px;
-    letter-spacing: 8px;
-  }
-
-  @media (min-width: 640px) {
-    body { padding: 40px 24px 60px; }
-    .card { padding: 42px 40px 36px; border-radius: 32px; }
-    .header h1 { font-size: 34px; }
-    .header .subtitle { font-size: 15.5px; }
-    .question h2 { font-size: 22px; }
-    textarea { font-size: 17px; padding: 18px 22px; min-height: 140px; }
-    .btn { font-size: 18px; padding: 20px; }
-    .float-item { font-size: 34px; }
-  }
-
-  @media (min-width: 1024px) {
-    .card { max-width: 680px; padding: 50px 48px 44px; }
-    .header h1 { font-size: 38px; }
-    .question h2 { font-size: 24px; }
+  /* Мобильная адаптация */
+  @media (max-width: 420px) {
+    .envelope-wrapper { width: 290px; height: 210px; }
+    .flap { border-left-width: 145px; border-right-width: 145px; border-top-width: 115px; }
+    .pocket::before { border-right-width: 145px; border-bottom-width: 105px; }
+    .pocket::after { border-left-width: 145px; border-bottom-width: 105px; }
+    .bottom-flap { border-left-width: 145px; border-right-width: 145px; border-bottom-width: 115px; }
+    .letter { width: 280px; padding: 26px 22px 66px; }
+    .seal { top: 86px; font-size: 32px; }
+    .envelope-wrapper.open .letter { transform: translateX(-50%) translateY(-250px); }
+    .page p { font-size: 14px; line-height: 29px; }
+    .signature { font-size: 16px; }
   }
 </style>
 </head>
 <body>
 
-<div class="bg-decor" id="bgDecor"></div>
+<!-- Плавающие сердечки -->
+<div class="heart-bg" style="top:15%; left:10%; animation-delay:0s;">♡</div>
+<div class="heart-bg" style="top:70%; left:15%; animation-delay:1.5s; font-size:26px;">♡</div>
+<div class="heart-bg" style="top:25%; left:85%; animation-delay:0.8s; font-size:28px;">♡</div>
+<div class="heart-bg" style="top:80%; left:88%; animation-delay:2.2s;">♡</div>
+<div class="heart-bg" style="top:50%; left:5%; animation-delay:3s; font-size:18px;">♡</div>
+<div class="heart-bg" style="top:10%; left:75%; animation-delay:1s; font-size:22px;">♡</div>
 
-<div class="card">
-  <div class="header">
-    <h1>Арина, привет 💕</h1>
-    <p class="subtitle">Несколько вопросов — просто хочу тебя узнать поближе</p>
-    <div class="heart-row">🌸 💖 🌷 💖 🌸</div>
+<div class="envelope-wrapper" id="envelope" onclick="openEnvelope(event)">
+  <!-- Письмо с страницами -->
+  <div class="letter" onclick="event.stopPropagation()">
+    <div class="page active">
+      <p>Я долго думал, как сказать это словами, но слова всё время получались какими-то не такими. Поэтому я сделал это.</p>
+      <p>Ты — человек, рядом с которым становится теплее. С тобой просто. С тобой хочется делиться мелочами и молчать о важном.</p>
+      <p>Я не знаю, что будет дальше, но я точно знаю: мне повезло, что ты есть. Спасибо, что ты — ты.</p>
+    </div>
+
+    <div class="page">
+      <p>Я знаю, у тебя проблемы с доверием к людям.</p>
+      <p>И я тебя прекрасно в этом понимаю, ведь у меня тоже множество неудачных попыток строить отношения.</p>
+    </div>
+
+    <div class="page">
+      <p>Но я хочу, чтобы ты не сравнивала меня с другими людьми, ведь я не могу нести ответственность за чужие поступки.</p>
+      <p>Да и повлиять я на их поступки тоже не мог.</p>
+    </div>
+
+    <div class="page">
+      <p>Я не волшебник и не смогу сделать что-то воистину чудесное. Единственная магия, которой я обладаю — это любовь и верность.</p>
+      <p>Поэтому я надеюсь, ты не будешь ставить стену между нами и сможешь дать мне шанс стать твоим попутчиком в жизни, от точки А и до бесконечности.</p>
+      <p>А я постараюсь раскрасить нашу чёрно-белую дорогу разными, яркими красками.</p>
+      <div class="signature">— Егор</div>
+    </div>
+
+    <!-- Навигация -->
+    <div class="nav">
+      <button id="prevBtn" onclick="changePage(-1)" disabled>‹</button>
+      <span class="counter" id="counter">1 / 4</span>
+      <button id="nextBtn" onclick="changePage(1)">›</button>
+    </div>
   </div>
 
-  <div class="progress-wrap">
-    <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
-    <div class="progress-text" id="progressText">1 / 18</div>
+  <!-- Конверт -->
+  <div class="envelope">
+    <div class="flap"></div>
+    <div class="pocket"></div>
+    <div class="bottom-flap"></div>
+    <div class="seal">💗</div>
   </div>
 
-  <div id="quiz"></div>
-
-  <div class="final" id="final">
-    <div class="big-heart">💖</div>
-    <h2>Спасибо, Арина!</h2>
-    <p>Твои ответы уже улетели ко мне. Прочитаю внимательно, обещаю 😌</p>
-    <div class="hearts-rain">🌸 💕 🌷 💕 🌸</div>
-  </div>
+  <div class="hint">нажми на конверт ✨</div>
 </div>
 
 <script>
-/* ==== НАСТРОЙКИ ==== */
-const BOT_TOKEN = '8911197805:AAGLuR0ri1t_wMX019vC36-Qkg6_tZcldMw';
-const CHAT_ID   = '890318583';
+  let currentPage = 0;
+  const pages = document.querySelectorAll('.page');
+  const totalPages = pages.length;
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('counter');
+  const envelope = document.getElementById('envelope');
 
-/* ==== ВОПРОСЫ ==== */
-const questions = [
-  { emoji: '💗', q: 'Что для тебя является главным проявлением заботы со стороны близкого человека?' },
-  { emoji: '📵', q: 'Если бы завтра исчез интернет навсегда, чем бы ты занялась в первую очередь?' },
-  { emoji: '🌙', q: 'О чём ты думаешь перед сном чаще всего?' },
-  { emoji: '🤍', q: 'Есть ли качество в людях, которое ты не можешь простить? И наоборот — которое ценишь больше всего?' },
-  { emoji: '🎓', q: 'Если бы ты могла освоить любую профессию за одну неделю, что бы это было?' },
-  { emoji: '💵', q: 'Если бы у тебя был миллион долларов, но его нельзя было бы тратить на себя (только на других или на проект), что бы ты сделала?' },
-  { emoji: '🌸', q: 'Есть ли запах, который больше всего тебе нравится?' },
-  { emoji: '🎬', q: 'Какой фильм или сериал ты можешь пересматривать бесконечно, даже зная все диалоги наизусть?' },
-  { emoji: '🧸', q: 'Какая твоя самая любимая игрушка была в детстве и почему именно она?' },
-  { emoji: '✨', q: 'Была ли у тебя детская мечта, о которой ты никому не рассказывала?' },
-  { emoji: '☀️', q: 'Что может сделать твой обычный день идеальным без глобальных событий?' },
-  { emoji: '🧠', q: 'В чём ты разбираешься лучше большинства людей?' },
-  { emoji: '🎭', q: 'В какой ситуации ты чувствуешь себя абсолютно собой, без масок?' },
-  { emoji: '👂', q: 'Что для тебя значит «быть услышанной»?' },
-  { emoji: '🤝', q: 'Ты веришь в дружбу между мужчиной и женщиной?' },
-  { emoji: '🔐', q: 'Как ты понимаешь, что человеку можно доверять?' },
-  { emoji: '😅', q: 'Есть ли у тебя привычка, которая бесит тебя саму, но ты не можешь от неё избавиться?' },
-  { emoji: '🦋', q: 'Было ли в твоей жизни событие, после которого ты сильно изменилась?' }
-];
-
-/* ==== ЛОГИКА ==== */
-let current = 0;
-const answers = new Array(questions.length).fill('');
-
-const quizEl       = document.getElementById('quiz');
-const progressBar  = document.getElementById('progressBar');
-const progressText = document.getElementById('progressText');
-const finalEl      = document.getElementById('final');
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[c]));
-}
-
-function render() {
-  const q = questions[current];
-  quizEl.innerHTML = `
-    <div class="question active">
-      <span class="q-emoji">${q.emoji}</span>
-      <h2>${q.q}</h2>
-      <textarea id="answerInput"
-                placeholder="Напиши что думаешь..."
-                maxlength="1000">${escapeHtml(answers[current])}</textarea>
-      <div class="char-count"><span id="charCount">0</span> / 1000</div>
-      <button class="btn" id="nextBtn">
-        ${current === questions.length - 1 ? 'Отправить 💌' : 'Дальше →'}
-      </button>
-      <button class="btn btn-back ${current > 0 ? 'show' : ''}" id="backBtn">
-        ← Назад
-      </button>
-    </div>
-  `;
-
-  const input     = document.getElementById('answerInput');
-  const nextBtn   = document.getElementById('nextBtn');
-  const backBtn   = document.getElementById('backBtn');
-  const charCount = document.getElementById('charCount');
-
-  const updateState = () => {
-    nextBtn.disabled = input.value.trim().length === 0;
-    charCount.textContent = input.value.length;
-  };
-
-  input.addEventListener('input', updateState);
-  updateState();
-
-  // Ctrl/Cmd+Enter = дальше (обычный Enter оставляем для переноса строки)
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      nextBtn.click();
-    }
-  });
-
-  nextBtn.addEventListener('click', () => {
-    const val = input.value.trim();
-    if (!val) return;
-    answers[current] = val;
-    current++;
-    if (current < questions.length) {
-      render();
-    } else {
-      finish();
-    }
-  });
-
-  backBtn.addEventListener('click', () => {
-    answers[current] = input.value.trim();
-    current--;
-    render();
-  });
-
-  updateProgress();
-
-  // автофокус только на ПК
-  if (window.innerWidth >= 640) input.focus();
-}
-
-function updateProgress() {
-  const pct = (current / questions.length) * 100;
-  progressBar.style.width = pct + '%';
-  progressText.textContent = (current + 1) + ' / ' + questions.length;
-}
-
-async function finish() {
-  progressBar.style.width = '100%';
-  progressText.textContent = questions.length + ' / ' + questions.length;
-  quizEl.style.display = 'none';
-  finalEl.classList.add('show');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-
-  const text =
-    '💖 <b>Арина ответила на опрос</b>\n\n' +
-    questions.map((q, i) =>
-      `${q.emoji} <b>${i + 1}. ${q.q}</b>\n<i>${escapeHtml(answers[i])}</i>`
-    ).join('\n\n');
-
-  // Telegram ограничивает сообщение 4096 символами — режем на части
-  const MAX = 4000;
-  const chunks = [];
-  let buf = '';
-  for (const line of text.split('\n\n')) {
-    if ((buf + '\n\n' + line).length > MAX) {
-      chunks.push(buf);
-      buf = line;
-    } else {
-      buf = buf ? buf + '\n\n' + line : line;
+  function openEnvelope(event) {
+    if (!envelope.classList.contains('open')) {
+      envelope.classList.add('open');
     }
   }
-  if (buf) chunks.push(buf);
 
-  try {
-    for (const chunk of chunks) {
-      const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: CHAT_ID,
-          text: chunk,
-          parse_mode: 'HTML'
-        })
-      });
-      const data = await res.json();
-      console.log('Telegram response:', data);
-    }
-  } catch (e) {
-    console.error('Не удалось отправить:', e);
+  function changePage(direction) {
+    pages[currentPage].classList.remove('active');
+    currentPage += direction;
+    pages[currentPage].classList.add('active');
+    updateNav();
   }
-}
 
-/* ==== ФОН: плавающие сердечки и цветочки ==== */
-function spawnDecor() {
-  const decor = document.getElementById('bgDecor');
-  const items = ['💖','🌸','💕','🌷','💗','🌺','💞','🌼','❤️','🌸'];
-  const count = window.innerWidth < 640 ? 14 : 22;
-
-  for (let i = 0; i < count; i++) {
-    const el = document.createElement('span');
-    el.className = 'float-item';
-    el.textContent = items[Math.floor(Math.random() * items.length)];
-    el.style.left = Math.random() * 100 + '%';
-    el.style.fontSize = (18 + Math.random() * 22) + 'px';
-    el.style.animationDuration = (10 + Math.random() * 12) + 's';
-    el.style.animationDelay = (-Math.random() * 20) + 's';
-    el.style.opacity = 0.35 + Math.random() * 0.35;
-    decor.appendChild(el);
+  function updateNav() {
+    prevBtn.disabled = currentPage === 0;
+    nextBtn.disabled = currentPage === totalPages - 1;
+    counter.textContent = (currentPage + 1) + ' / ' + totalPages;
   }
-}
 
-spawnDecor();
-render();
+  updateNav();
 </script>
 
 </body>
